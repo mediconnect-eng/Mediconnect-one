@@ -137,6 +137,12 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes (October 2025)
 
 ### Completed Features (Latest)
+- ✅ **Real User Registration & Multi-Tenant System (October 2025)**: Implemented complete signup and authentication system:
+  - **Patient Signup**: Full registration form with name, email, WhatsApp number, date of birth, gender
+  - **Security Validation**: Duplicate email/phone checks, phone verification on login, terms acceptance enforcement
+  - **Multi-Tenant Data Isolation**: All database queries filter by userId - users only see their own prescriptions, diagnostics, consultations
+  - **Database Storage**: Users stored in PostgreSQL with metadata JSON for optional fields (DOB, gender)
+  - **Cross-Functional**: Each user has isolated account, no shared demo data
 - ✅ **Patient Portal Complete Redesign (October 2025)**: Implemented all patient screens based on PDF designs with purple/indigo theme:
   - **Core Screens**: Care home (AI assistant card, quick access icons, nearby pharmacies, educational videos), Profile (user info, menu sections, support, legal, enhanced sign out modal), Diagnostics (test order cards with progress dots, status badges, file upload), Pharmacy (active prescription card, map view, pharmacy list, prescription history tabs), Specialists (upcoming appointments with Dr. Sarah Johnson, past visits, cancel modal)
   - **Supporting Pages**: Splash loading screen with M logo and auto-redirect, Terms & Consent page with checkboxes and accept flow, Visit Summary with doctor info/vitals/diagnosis/treatment plan/prescriptions/lab results, Notification Preferences with WhatsApp toggles, Support page with WhatsApp chat and hours info
