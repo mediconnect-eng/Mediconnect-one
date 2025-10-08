@@ -30,6 +30,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/auth/signup", async (req, res) => {
+    try {
+      const { insertUserSchema } = await import("@shared/schema");
+      const { z } = await import("zod");
+      
+      // Validate request body using Zod schema
+      const signupSchema = insertUserSchema.extend({
+        dateOfBirth: z.string().optional(),
+        gender: z.string().optional(),
+        agreeToTerms: z.boolean().optional()
+      });
+      
+      const signupData = signupSchema.parse(req.body);
+      
+      // Check if email already exists
+      const existingUser = await storage.getUserByEmail(signupData.email!);
+      if (existingUser) {
+        return res.status(400).json({ error: "Email already registered" });
+      }
+      
+      // Check if phone already exists
+      if (signupData.phone) {
+        const existingPhone = await storage.getUserByPhone(signupData.phone);
+        if (existingPhone) {
+          return res.status(400).json({ error: "Phone number already registered" });
+        }
+      }
+      
+      // Validate terms acceptance
+      if (!signupData.agreeToTerms) {
+        return res.status(400).json({ error: "You must agree to terms and conditions" });
+      }
+      
+      // Create metadata object
+      const metadata: any = {};
+      if (signupData.dateOfBirth) metadata.dateOfBirth = signupData.dateOfBirth;
+      if (signupData.gender) metadata.gender = signupData.gender;
+      
+      // Create new user with role="patient"
+      const newUser = await storage.createUser({
+        name: signupData.name,
+        email: signupData.email,
+        phone: signupData.phone,
+        role: "patient",
+        metadata: Object.keys(metadata).length > 0 ? metadata : null
+      });
+      
+      await adapters.audit.log("user_signup", newUser.id, "auth", { role: "patient" });
+      res.json({ user: newUser });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
   app.post("/api/auth/mock-login", async (req, res) => {
     try {
       const { email, phone, role } = req.body;
@@ -52,8 +106,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Phone number must contain at least 10 digits" });
       }
       
-      const user = await adapters.auth.mockLogin(email, phone, role);
-      await adapters.audit.log("mock_login", user.id, "auth", { role });
+      // Check if user exists by email
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ error: "User not found. Please sign up first." });
+      }
+      
+      // Verify phone matches
+      if (user.phone !== phone) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      // Return user data
+      await adapters.audit.log("mock_login", user.id, "auth", { role: user.role });
       res.json({ user });
     } catch (error: any) {
       res.status(400).json({ error: error.message });

@@ -14,7 +14,7 @@ import type {
 export interface AuthPort {
   requestOtp(phone: string): Promise<{ success: boolean; message: string }>;
   verifyOtp(phone: string, code: string): Promise<{ success: boolean; user?: User }>;
-  mockLogin(identifier: string, role: UserRole): Promise<User>;
+  mockLogin(email: string, phone: string, role: UserRole): Promise<User>;
 }
 
 // Consult Port - handles consultations

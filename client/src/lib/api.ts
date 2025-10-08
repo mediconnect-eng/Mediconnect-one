@@ -27,6 +27,9 @@ export type EnrichedDiagnosticsOrder = {
 
 export const api = {
   auth: {
+    async signup(data: { name: string; email: string; phone: string; dateOfBirth?: string; gender?: string }): Promise<{ user: User }> {
+      return apiRequest("POST", "/api/auth/signup", data);
+    },
     async mockLogin(email: string, phone: string, role: UserRole): Promise<{ user: User }> {
       return apiRequest("POST", "/api/auth/mock-login", { email, phone, role });
     },

@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 
 import PatientLogin from "@/pages/patient/Login";
+import PatientSignup from "@/pages/patient/Signup";
 import PatientHome from "@/pages/patient/PatientHome";
 import Intake from "@/pages/patient/Intake";
 import ConsultWaiting from "@/pages/patient/ConsultWaiting";
@@ -47,6 +48,7 @@ function Router() {
       
       {/* Patient Routes */}
       <Route path="/patient/login" component={PatientLogin} />
+      <Route path="/patient/signup" component={PatientSignup} />
       <Route path="/patient" component={PatientHome} />
       <Route path="/patient/home" component={PatientHome} />
       <Route path="/patient/intake" component={Intake} />
