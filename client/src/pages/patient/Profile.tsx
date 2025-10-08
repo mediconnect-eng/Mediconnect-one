@@ -1,207 +1,266 @@
-import { useState } from "react";
 import { useLocation } from "wouter";
+import { PatientShell } from "@/components/PatientShell";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { TabNav, type Tab } from "@/components/TabNav";
-import { ArrowLeft, User, Bell, Shield, FileText, UserCog, Pill, Heart, Microscope, LogOut } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  User, 
+  Users, 
+  CreditCard, 
+  MapPin, 
+  FileText, 
+  Bell, 
+  HelpCircle, 
+  Scale,
+  LogOut,
+  ChevronRight,
+  Headphones,
+  AlertTriangle,
+  Edit
+} from "lucide-react";
 
 export default function Profile() {
   const [, setLocation] = useLocation();
-  const [consents, setConsents] = useState({
-    dataSharing: true,
-    marketing: false,
-    research: false
-  });
-  const [notifications, setNotifications] = useState({
-    whatsapp: true,
-    email: false,
-    sms: true
-  });
-
-  const tabs: Tab[] = [
-    { id: "specialists", label: "Specialists", href: "/patient/home", icon: <UserCog className="h-5 w-5" /> },
-    { id: "pharmacy", label: "Pharmacy", href: "/patient/home", icon: <Pill className="h-5 w-5" /> },
-    { id: "care", label: "Care", href: "/patient/home", icon: <Heart className="h-5 w-5" /> },
-    { id: "diagnostics", label: "Diagnostics", href: "/patient/diagnostics", icon: <Microscope className="h-5 w-5" /> },
-    { id: "profile", label: "Profile", href: "/patient/profile", icon: <User className="h-5 w-5" /> },
-  ];
+  const { toast } = useToast();
 
   const handleLogout = () => {
     localStorage.removeItem("mediconnect_user");
     setLocation("/");
   };
 
+  const handleComingSoon = (feature: string) => {
+    toast({
+      title: "Coming soon",
+      description: `${feature} will be available in a future update.`,
+    });
+  };
+
+  const menuItems = [
+    {
+      icon: Users,
+      title: "Dependents and family",
+      subtitle: "2 dependents",
+      route: "/patient/profile/dependents",
+      testId: "menu-dependents"
+    },
+    {
+      icon: CreditCard,
+      title: "Payments",
+      subtitle: "Payment methods and invoices",
+      route: "/patient/profile/payments",
+      testId: "menu-payments"
+    },
+    {
+      icon: MapPin,
+      title: "Addresses",
+      subtitle: "Delivery and consultation addresses",
+      route: "/patient/profile/addresses",
+      testId: "menu-addresses"
+    },
+    {
+      icon: FileText,
+      title: "Records and documents",
+      subtitle: "Medical history and reports",
+      route: "/patient/profile/records",
+      testId: "menu-records"
+    }
+  ];
+
+  const legalItems = [
+    {
+      title: "Terms of service",
+      route: "/legal/terms",
+      testId: "link-terms"
+    },
+    {
+      title: "Privacy policy",
+      route: "/legal/privacy",
+      testId: "link-privacy"
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Mediconnect</h1>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={handleLogout}
-            data-testid="button-logout"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
-        </div>
-      </header>
-
-      <TabNav tabs={tabs} />
-
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="space-y-6">
-          <Card className="p-6">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="h-8 w-8 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold text-foreground">Patient Profile</h2>
-                <p className="text-sm text-muted-foreground">Manage your health information</p>
+    <PatientShell>
+      <div className="container mx-auto px-4 py-6 max-w-2xl space-y-4">
+        {/* User Info Card */}
+        <Card data-testid="card-user-info">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-4 mb-6">
+              <Avatar className="h-14 w-14 bg-primary" data-testid="avatar-user">
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  <User className="h-7 w-7" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <h2 className="text-lg font-semibold text-foreground" data-testid="text-username">
+                  John Smith
+                </h2>
+                <p className="text-sm text-muted-foreground" data-testid="text-user-role">
+                  Account holder
+                </p>
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Name</p>
-                <p className="font-medium text-foreground">Test Patient</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Phone</p>
-                <p className="font-medium text-foreground">+1 (555) 123-4567</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <Bell className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">Notification Preferences</h2>
-            </div>
-
-            <div className="space-y-4">
+            <div className="space-y-3 mb-6">
               <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="notif-whatsapp" className="text-base">WhatsApp</Label>
-                  <p className="text-sm text-muted-foreground">Receive updates via WhatsApp</p>
+                <div>
+                  <p className="text-sm text-muted-foreground">WhatsApp number</p>
+                  <p className="text-sm font-medium text-foreground" data-testid="text-whatsapp">
+                    +254 700 123 456
+                  </p>
                 </div>
-                <Switch
-                  id="notif-whatsapp"
-                  checked={notifications.whatsapp}
-                  onCheckedChange={(checked) => setNotifications({ ...notifications, whatsapp: checked })}
-                  data-testid="switch-notif-whatsapp"
-                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-primary"
+                  onClick={() => handleComingSoon("Change WhatsApp number")}
+                  data-testid="button-change-whatsapp"
+                >
+                  Change
+                </Button>
               </div>
 
               <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="notif-email" className="text-base">Email</Label>
-                  <p className="text-sm text-muted-foreground">Receive updates via email</p>
+                <div>
+                  <p className="text-sm text-muted-foreground">Language</p>
+                  <p className="text-sm font-medium text-foreground" data-testid="text-language">
+                    English
+                  </p>
                 </div>
-                <Switch
-                  id="notif-email"
-                  checked={notifications.email}
-                  onCheckedChange={(checked) => setNotifications({ ...notifications, email: checked })}
-                  data-testid="switch-notif-email"
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="notif-sms" className="text-base">SMS</Label>
-                  <p className="text-sm text-muted-foreground">Receive updates via SMS</p>
-                </div>
-                <Switch
-                  id="notif-sms"
-                  checked={notifications.sms}
-                  onCheckedChange={(checked) => setNotifications({ ...notifications, sms: checked })}
-                  data-testid="switch-notif-sms"
-                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-primary"
+                  onClick={() => handleComingSoon("Change language")}
+                  data-testid="button-change-language"
+                >
+                  Change
+                </Button>
               </div>
             </div>
-          </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <Shield className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">Privacy & Consents</h2>
-            </div>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => handleComingSoon("Edit profile")}
+              data-testid="button-edit-profile"
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Edit profile
+            </Button>
+          </CardContent>
+        </Card>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="consent-sharing" className="text-base">Data Sharing</Label>
-                  <p className="text-sm text-muted-foreground">Share health data with care team</p>
+        {/* Menu Items */}
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Card
+              key={item.testId}
+              className="hover-elevate active-elevate-2 cursor-pointer"
+              onClick={() => handleComingSoon(item.title)}
+              data-testid={item.testId}
+            >
+              <CardContent className="flex items-center gap-3 p-4">
+                <div className="flex-shrink-0">
+                  <Icon className="h-5 w-5 text-muted-foreground" />
                 </div>
-                <Switch
-                  id="consent-sharing"
-                  checked={consents.dataSharing}
-                  onCheckedChange={(checked) => setConsents({ ...consents, dataSharing: checked })}
-                  data-testid="switch-consent-sharing"
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="consent-marketing" className="text-base">Marketing Communications</Label>
-                  <p className="text-sm text-muted-foreground">Receive health tips and updates</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-foreground">{item.title}</p>
+                  <p className="text-sm text-muted-foreground">{item.subtitle}</p>
                 </div>
-                <Switch
-                  id="consent-marketing"
-                  checked={consents.marketing}
-                  onCheckedChange={(checked) => setConsents({ ...consents, marketing: checked })}
-                  data-testid="switch-consent-marketing"
-                />
-              </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+              </CardContent>
+            </Card>
+          );
+        })}
 
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="consent-research" className="text-base">Research Participation</Label>
-                  <p className="text-sm text-muted-foreground">Use anonymized data for research</p>
-                </div>
-                <Switch
-                  id="consent-research"
-                  checked={consents.research}
-                  onCheckedChange={(checked) => setConsents({ ...consents, research: checked })}
-                  data-testid="switch-consent-research"
-                />
-              </div>
+        {/* Notification Preferences */}
+        <Card
+          className="hover-elevate active-elevate-2 cursor-pointer"
+          onClick={() => handleComingSoon("Notification preferences")}
+          data-testid="menu-notifications"
+        >
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex-shrink-0">
+              <Bell className="h-5 w-5 text-muted-foreground" />
             </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <FileText className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold text-foreground">Legal Documents</h2>
+            <div className="flex-1">
+              <p className="font-medium text-foreground">Notification preferences</p>
             </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+          </CardContent>
+        </Card>
 
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => setLocation("/legal/terms")}
-                data-testid="button-terms"
+        {/* Support Section */}
+        <Card data-testid="card-support">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <HelpCircle className="h-5 w-5 text-muted-foreground" />
+              Support
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button
+              className="w-full"
+              onClick={() => handleComingSoon("Contact support")}
+              data-testid="button-contact-support"
+            >
+              <Headphones className="h-4 w-4 mr-2" />
+              Contact support
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full bg-amber-400 hover:bg-amber-500 text-amber-950 border-amber-500"
+              onClick={() => handleComingSoon("Report an issue")}
+              data-testid="button-report-issue"
+            >
+              <AlertTriangle className="h-4 w-4 mr-2" />
+              Report an issue
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Legal Section */}
+        <Card data-testid="card-legal">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Scale className="h-5 w-5 text-muted-foreground" />
+              Legal
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            {legalItems.map((item) => (
+              <div
+                key={item.testId}
+                className="flex items-center justify-between p-3 -mx-3 rounded-md hover-elevate active-elevate-2 cursor-pointer"
+                onClick={() => setLocation(item.route)}
+                data-testid={item.testId}
               >
-                <FileText className="mr-2 h-4 w-4" />
-                Terms of Service
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => setLocation("/legal/privacy")}
-                data-testid="button-privacy"
-              >
-                <Shield className="mr-2 h-4 w-4" />
-                Privacy Policy
-              </Button>
-            </div>
-          </Card>
-        </div>
-      </main>
-    </div>
+                <p className="text-sm font-medium text-foreground">{item.title}</p>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Version Info */}
+        <p className="text-center text-sm text-muted-foreground py-2" data-testid="text-version">
+          Version 1.0.0 (Build 123)
+        </p>
+
+        {/* Sign Out Button */}
+        <Button
+          variant="destructive"
+          className="w-full"
+          onClick={handleLogout}
+          data-testid="button-sign-out"
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Sign out
+        </Button>
+      </div>
+    </PatientShell>
   );
 }

@@ -11,6 +11,20 @@ import type {
   UserRole
 } from "@shared/schema";
 
+export type EnrichedDiagnosticsOrder = {
+  id: string;
+  orderId: string;
+  testType: string;
+  status: "ordered" | "sample_collected" | "in_progress" | "completed";
+  createdAt: Date | string;
+  labId: string | null;
+  labInfo: {
+    name: string;
+    location: string;
+  } | null;
+  resultUrl: string | null;
+};
+
 export const api = {
   auth: {
     async mockLogin(email: string, phone: string, role: UserRole): Promise<{ user: User }> {
@@ -61,7 +75,7 @@ export const api = {
   },
 
   diagnostics: {
-    async listOrders(userId: string, role: UserRole): Promise<DiagnosticsOrder[]> {
+    async listOrders(userId: string, role: UserRole): Promise<EnrichedDiagnosticsOrder[]> {
       return apiRequest("GET", `/api/diagnostics/orders?userId=${userId}&role=${role}`, undefined);
     },
     async uploadResult(orderId: string, fileData: any): Promise<DiagnosticsOrder> {

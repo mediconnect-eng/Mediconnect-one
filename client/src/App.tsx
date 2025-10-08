@@ -15,6 +15,8 @@ import Prescriptions from "@/pages/patient/Prescriptions";
 import PrescriptionDetail from "@/pages/patient/PrescriptionDetail";
 import Diagnostics from "@/pages/patient/Diagnostics";
 import Profile from "@/pages/patient/Profile";
+import Pharmacy from "@/pages/patient/Pharmacy";
+import Specialists from "@/pages/patient/Specialists";
 
 import GPLogin from "@/pages/gp/Login";
 import GPPortal from "@/pages/gp/GPPortal";
@@ -43,6 +45,8 @@ function Router() {
       <Route path="/patient/consult-waiting" component={ConsultWaiting} />
       <Route path="/patient/prescriptions" component={Prescriptions} />
       <Route path="/patient/prescriptions/:id" component={PrescriptionDetail} />
+      <Route path="/patient/pharmacy" component={Pharmacy} />
+      <Route path="/patient/specialists" component={Specialists} />
       <Route path="/patient/diagnostics" component={Diagnostics} />
       <Route path="/patient/profile" component={Profile} />
       

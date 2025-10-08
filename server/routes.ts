@@ -320,17 +320,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { userId, role } = req.query as { userId: string; role: string };
       const orders = await storage.listDiagnosticsOrders(userId, role as any);
       
-      const minimalPiiOrders = orders.map(order => ({
-        id: order.id,
-        orderId: order.id,
-        testType: order.testType,
-        status: order.status,
-        createdAt: order.createdAt,
-        labId: order.labId,
-        resultUrl: order.resultUrl
-      }));
+      const enrichedOrders = await Promise.all(
+        orders.map(async (order) => {
+          let labInfo = null;
+          if (order.labId) {
+            const lab = await storage.getUser(order.labId);
+            if (lab) {
+              const metadata = lab.metadata as { location?: string } | null;
+              labInfo = {
+                name: lab.name,
+                location: metadata?.location || "Location not specified"
+              };
+            }
+          }
+          
+          return {
+            id: order.id,
+            orderId: order.id,
+            testType: order.testType,
+            status: order.status,
+            createdAt: order.createdAt,
+            labId: order.labId,
+            labInfo,
+            resultUrl: order.resultUrl
+          };
+        })
+      );
 
-      res.json(minimalPiiOrders);
+      res.json(enrichedOrders);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }

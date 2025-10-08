@@ -43,11 +43,11 @@ async function seed() {
   }).returning();
 
   const [lab] = await db.insert(users).values({
-    name: "HealthLab Diagnostics",
+    name: "HealthLab Central",
     phone: "+1234567894",
     email: "lab@demo.com",
     role: "diagnostics",
-    metadata: {}
+    metadata: { location: "Valley Arcade, Lavington" }
   }).returning();
 
   console.log("✅ Created users");
@@ -103,22 +103,47 @@ async function seed() {
 
   console.log("✅ Created prescription");
 
-  // Create diagnostics orders
+  // Create additional labs for variety
+  const [lab2] = await db.insert(users).values({
+    name: "Lancet Kenya",
+    phone: "+1234567895",
+    email: "lancet@demo.com",
+    role: "diagnostics",
+    metadata: { location: "Westlands" }
+  }).returning();
+
+  const [lab3] = await db.insert(users).values({
+    name: "Pathcare Labs",
+    phone: "+1234567896",
+    email: "pathcare@demo.com",
+    role: "diagnostics",
+    metadata: { location: "Karen" }
+  }).returning();
+
+  // Create diagnostics orders with varied statuses
   await db.insert(diagnosticsOrders).values([
     {
       patientId: patient.id,
       specialistId: specialist.id,
       labId: lab.id,
-      status: "completed",
+      status: "sample_collected",
       testType: "Complete Blood Count (CBC)",
-      resultUrl: "local://results-cbc-001"
+      resultUrl: null
     },
     {
       patientId: patient.id,
       specialistId: specialist.id,
-      labId: null,
-      status: "in_progress",
-      testType: "Lipid Panel",
+      labId: lab2.id,
+      status: "completed",
+      testType: "Lipid Profile",
+      resultUrl: "local://results-lipid-001"
+    },
+    {
+      patientId: patient.id,
+      specialistId: specialist.id,
+      labId: lab3.id,
+      status: "ordered",
+      testType: "Thyroid Function Test",
       resultUrl: null
     }
   ]).returning();
