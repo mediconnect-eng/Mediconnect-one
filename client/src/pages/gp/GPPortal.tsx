@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StatusChip } from "@/components/StatusChip";
 import { StaticChatThread } from "@/components/StaticChatThread";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { 
   Inbox, 
   CheckCircle2, 
@@ -32,14 +33,14 @@ const mockMessages = [
     consultId: "C-001",
     senderId: "patient-1",
     content: "Hi doctor, I've been experiencing severe headaches",
-    createdAt: new Date(Date.now() - 3600000).toISOString()
+    createdAt: new Date(Date.now() - 3600000)
   },
   {
     id: "msg-2",
     consultId: "C-001",
     senderId: "gp-1",
     content: "I understand. Can you describe when the headaches occur?",
-    createdAt: new Date(Date.now() - 3000000).toISOString()
+    createdAt: new Date(Date.now() - 3000000)
   }
 ];
 
@@ -69,15 +70,18 @@ export default function GPPortal() {
             <h1 className="text-2xl font-bold text-foreground">GP Portal</h1>
             <p className="text-sm text-muted-foreground">Dr. Sarah Johnson</p>
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={handleLogout}
-            data-testid="button-logout"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleLogout}
+              data-testid="button-logout"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -117,7 +121,7 @@ export default function GPPortal() {
                     <div className="text-right text-sm">
                       <div className="flex items-center gap-1 text-muted-foreground">
                         <Clock className="h-3 w-3" />
-                        {new Date(consult.createdAt).toLocaleTimeString()}
+                        {consult.createdAt ? new Date(consult.createdAt).toLocaleTimeString() : 'N/A'}
                       </div>
                     </div>
                   </div>

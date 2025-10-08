@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { 
   QrCode, 
   LogOut,
@@ -51,15 +52,18 @@ export default function PharmacyScanner() {
             <h1 className="text-2xl font-bold text-foreground">Pharmacy Portal</h1>
             <p className="text-sm text-muted-foreground">HealthCare Pharmacy</p>
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={handleLogout}
-            data-testid="button-logout"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleLogout}
+              data-testid="button-logout"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
       </header>
 

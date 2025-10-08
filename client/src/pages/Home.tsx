@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { User, Stethoscope, Building, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -25,6 +26,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
+      <div className="absolute top-4 right-4 z-10">
+        <ThemeToggle />
+      </div>
       <div className="container mx-auto px-4 py-16 max-w-6xl">
         {/* Hero Section */}
         <div className="text-center mb-12 space-y-4">

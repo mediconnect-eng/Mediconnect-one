@@ -3,6 +3,7 @@ import { useLocation, Link } from "wouter"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { ThemeToggle } from "@/components/ThemeToggle"
 import { 
   Phone, 
   Bell,
@@ -50,6 +51,7 @@ export function PatientShell({
           Mediconnect
         </h1>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <button 
             className="relative"
             data-testid="button-notifications"

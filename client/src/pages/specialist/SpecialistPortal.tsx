@@ -4,6 +4,7 @@ import { TabNav, type Tab } from "@/components/TabNav";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StatusChip } from "@/components/StatusChip";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { 
   Inbox, 
   Activity, 
@@ -51,15 +52,18 @@ export default function SpecialistPortal() {
             <h1 className="text-2xl font-bold text-foreground">Specialist Portal</h1>
             <p className="text-sm text-muted-foreground">Dr. David Williams - Cardiology</p>
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={handleLogout}
-            data-testid="button-logout"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleLogout}
+              data-testid="button-logout"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -91,7 +95,7 @@ export default function SpecialistPortal() {
                       <StatusChip status={referral.status} />
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Referred: {new Date(referral.createdAt).toLocaleString()}
+                      Referred: {referral.createdAt ? new Date(referral.createdAt).toLocaleString() : 'N/A'}
                     </p>
                     <p className="text-sm text-foreground">{referral.reason}</p>
                     {referral.notes && (
