@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Info, ChevronRight } from "lucide-react";
+import { Info, ChevronRight, Calendar, MessageCircle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface PastVisit {
@@ -26,10 +26,29 @@ interface PastVisit {
   status: "completed" | "cancelled";
 }
 
+interface UpcomingAppointment {
+  id: string;
+  doctorName: string;
+  specialty: string;
+  date: string;
+  time: string;
+  type: 'online' | 'local' | 'both';
+}
+
 export default function Specialists() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showCancelModal, setShowCancelModal] = useState(false);
+
+  // Mock data for upcoming appointment
+  const upcomingAppointment: UpcomingAppointment | null = {
+    id: "upcoming-1",
+    doctorName: "Dr. Sarah Johnson",
+    specialty: "Cardiologist",
+    date: "Dec 15",
+    time: "2:30 PM",
+    type: 'both',
+  };
 
   // Mock data for past visits
   const pastVisits: PastVisit[] = [
@@ -63,11 +82,8 @@ export default function Specialists() {
     },
   ];
 
-  const handleViewSummary = (doctorName: string) => {
-    toast({
-      title: "Coming soon",
-      description: `Visit summary for ${doctorName} will be available soon.`,
-    });
+  const handleViewSummary = (visitId: string) => {
+    setLocation(`/patient/visits/${visitId}`);
   };
 
   const handleCancelAppointment = () => {
@@ -83,6 +99,13 @@ export default function Specialists() {
     toast({
       title: "Opening WhatsApp",
       description: "Redirecting to WhatsApp consultation...",
+    });
+  };
+
+  const handleRequestNewTime = () => {
+    toast({
+      title: "Coming soon",
+      description: "Request new time feature will be available soon.",
     });
   };
 
@@ -109,29 +132,80 @@ export default function Specialists() {
           Start GP Consult
         </Button>
 
-        {/* Request New Time / Cancel Buttons */}
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            className="flex-1"
-            onClick={() => {
-              toast({
-                title: "Coming soon",
-                description: "Request new time feature will be available soon.",
-              });
-            }}
-            data-testid="button-request-new-time"
-          >
-            Request new time
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-1 text-destructive hover:text-destructive"
-            onClick={() => setShowCancelModal(true)}
-            data-testid="button-cancel-appointment"
-          >
-            Cancel
-          </Button>
+        {/* Upcoming Appointments Section */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground" data-testid="heading-upcoming-appointments">
+            Upcoming Appointments
+          </h2>
+
+          {upcomingAppointment ? (
+            <Card className="p-4 hover-elevate" data-testid="card-upcoming-appointment">
+              <div className="space-y-4">
+                {/* Doctor Info */}
+                <div className="space-y-1">
+                  <h3 className="font-semibold text-foreground" data-testid="text-upcoming-doctor-name">
+                    {upcomingAppointment.doctorName}
+                  </h3>
+                  <p className="text-sm text-muted-foreground" data-testid="text-upcoming-specialty">
+                    {upcomingAppointment.specialty}
+                  </p>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground" data-testid="text-upcoming-datetime">
+                    <Calendar className="h-4 w-4" />
+                    <span>{upcomingAppointment.date} at {upcomingAppointment.time}</span>
+                  </div>
+                </div>
+
+                {/* Appointment Type Badges */}
+                <div className="flex gap-2">
+                  {(upcomingAppointment.type === 'online' || upcomingAppointment.type === 'both') && (
+                    <StatusBadge variant="info" className="px-2 py-0.5" data-testid="badge-online-video">
+                      Online video
+                    </StatusBadge>
+                  )}
+                  {(upcomingAppointment.type === 'local' || upcomingAppointment.type === 'both') && (
+                    <StatusBadge variant="default" className="px-2 py-0.5" data-testid="badge-local">
+                      Local
+                    </StatusBadge>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-2">
+                  <Button
+                    className="w-full gap-2"
+                    onClick={handleJoinWhatsApp}
+                    data-testid="button-join-whatsapp"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Join via WhatsApp
+                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1 gap-2"
+                      onClick={handleRequestNewTime}
+                      data-testid="button-request-new-time"
+                    >
+                      <Clock className="h-4 w-4" />
+                      Request new time
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex-1 text-destructive hover:text-destructive"
+                      onClick={() => setShowCancelModal(true)}
+                      data-testid="button-cancel-appointment"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ) : (
+            <p className="text-sm text-muted-foreground" data-testid="text-no-upcoming">
+              No upcoming appointments
+            </p>
+          )}
         </div>
 
         {/* Past Visits Section */}
@@ -171,7 +245,7 @@ export default function Specialists() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleViewSummary(visit.doctorName)}
+                    onClick={() => handleViewSummary(visit.id)}
                     className="gap-2"
                     data-testid={`button-view-summary-${visit.id}`}
                   >
@@ -211,13 +285,6 @@ export default function Specialists() {
             >
               Keep Appointment
             </AlertDialogCancel>
-            <Button
-              onClick={handleJoinWhatsApp}
-              className="w-full"
-              data-testid="button-join-whatsapp"
-            >
-              Join via WhatsApp
-            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

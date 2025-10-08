@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PatientShell } from "@/components/PatientShell";
 import { Card } from "@/components/ui/card";
@@ -6,6 +7,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { ProgressDots } from "@/components/ui/progress-dots";
 import { ActionButton } from "@/components/ui/action-button";
 import { ObjectUploader } from "@/components/ObjectUploader";
+import { RequestSamplePickupModal } from "@/components/RequestSamplePickupModal";
 import { 
   MapPin, 
   Calendar, 
@@ -73,6 +75,8 @@ function formatAppointmentDate(date: Date | string): string {
 
 export default function Diagnostics() {
   const { toast } = useToast();
+  const [pickupModalOpen, setPickupModalOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | undefined>();
 
   const userData = getUserFromStorage() || {};
   const userId = userData.id;
@@ -92,10 +96,8 @@ export default function Diagnostics() {
   };
 
   const handleBookPickup = (order: EnrichedDiagnosticsOrder) => {
-    toast({
-      title: "Sample pickup",
-      description: `Booking sample pickup for ${order.testType}`,
-    });
+    setSelectedOrderId(order.id);
+    setPickupModalOpen(true);
   };
 
   const handleDownloadResults = (order: EnrichedDiagnosticsOrder) => {
@@ -271,6 +273,13 @@ export default function Diagnostics() {
           </ObjectUploader>
         </div>
       </div>
+
+      {/* Request Sample Pickup Modal */}
+      <RequestSamplePickupModal
+        open={pickupModalOpen}
+        onOpenChange={setPickupModalOpen}
+        orderId={selectedOrderId}
+      />
     </PatientShell>
   );
 }

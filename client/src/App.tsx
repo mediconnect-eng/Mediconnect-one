@@ -15,8 +15,11 @@ import Prescriptions from "@/pages/patient/Prescriptions";
 import PrescriptionDetail from "@/pages/patient/PrescriptionDetail";
 import Diagnostics from "@/pages/patient/Diagnostics";
 import Profile from "@/pages/patient/Profile";
+import NotificationPreferences from "@/pages/patient/NotificationPreferences";
+import Support from "@/pages/patient/Support";
 import Pharmacy from "@/pages/patient/Pharmacy";
 import Specialists from "@/pages/patient/Specialists";
+import VisitSummary from "@/pages/patient/VisitSummary";
 
 import GPLogin from "@/pages/gp/Login";
 import GPPortal from "@/pages/gp/GPPortal";
@@ -33,10 +36,14 @@ import DiagnosticsOrders from "@/pages/diagnostics/Orders";
 import Terms from "@/pages/legal/Terms";
 import Privacy from "@/pages/legal/Privacy";
 
+import Splash from "@/pages/Splash";
+import TermsConsent from "@/pages/TermsConsent";
+
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/splash" component={Splash} />
       
       {/* Patient Routes */}
       <Route path="/patient/login" component={PatientLogin} />
@@ -48,8 +55,11 @@ function Router() {
       <Route path="/patient/prescriptions/:id" component={PrescriptionDetail} />
       <Route path="/patient/pharmacy" component={Pharmacy} />
       <Route path="/patient/specialists" component={Specialists} />
+      <Route path="/patient/visits/:id" component={VisitSummary} />
       <Route path="/patient/diagnostics" component={Diagnostics} />
       <Route path="/patient/profile" component={Profile} />
+      <Route path="/patient/profile/notifications" component={NotificationPreferences} />
+      <Route path="/patient/support" component={Support} />
       
       {/* GP Routes */}
       <Route path="/gp/login" component={GPLogin} />
@@ -70,6 +80,9 @@ function Router() {
       {/* Legal Routes */}
       <Route path="/legal/terms" component={Terms} />
       <Route path="/legal/privacy" component={Privacy} />
+      
+      {/* Terms and Consent */}
+      <Route path="/terms-consent" component={TermsConsent} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />

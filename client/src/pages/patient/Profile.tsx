@@ -1,8 +1,19 @@
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { PatientShell } from "@/components/PatientShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { 
   User, 
@@ -23,6 +34,7 @@ import {
 export default function Profile() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const [isSignOutDialogOpen, setIsSignOutDialogOpen] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem("mediconnect_user");
@@ -179,7 +191,7 @@ export default function Profile() {
         {/* Notification Preferences */}
         <Card
           className="hover-elevate active-elevate-2 cursor-pointer"
-          onClick={() => handleComingSoon("Notification preferences")}
+          onClick={() => setLocation("/patient/profile/notifications")}
           data-testid="menu-notifications"
         >
           <CardContent className="flex items-center gap-3 p-4">
@@ -204,7 +216,7 @@ export default function Profile() {
           <CardContent className="space-y-2">
             <Button
               className="w-full"
-              onClick={() => handleComingSoon("Contact support")}
+              onClick={() => setLocation("/patient/support")}
               data-testid="button-contact-support"
             >
               <Headphones className="h-4 w-4 mr-2" />
@@ -254,12 +266,42 @@ export default function Profile() {
         <Button
           variant="destructive"
           className="w-full"
-          onClick={handleLogout}
+          onClick={() => setIsSignOutDialogOpen(true)}
           data-testid="button-sign-out"
         >
           <LogOut className="h-4 w-4 mr-2" />
           Sign out
         </Button>
+
+        {/* Sign Out Confirmation Dialog */}
+        <AlertDialog open={isSignOutDialogOpen} onOpenChange={setIsSignOutDialogOpen}>
+          <AlertDialogContent data-testid="dialog-sign-out">
+            <AlertDialogHeader className="text-center">
+              <AlertDialogTitle className="text-center" data-testid="dialog-title-sign-out">
+                Sign out?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-center" data-testid="dialog-description-sign-out">
+                You'll need WhatsApp to sign in again. Your data will remain safe and secure.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+              <AlertDialogAction
+                className="w-full bg-red-600 hover:bg-red-700 text-white"
+                onClick={handleLogout}
+                data-testid="button-confirm-sign-out"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign out
+              </AlertDialogAction>
+              <AlertDialogCancel
+                className="w-full mt-0"
+                data-testid="button-cancel-sign-out"
+              >
+                Cancel
+              </AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </PatientShell>
   );
