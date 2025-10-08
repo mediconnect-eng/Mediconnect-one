@@ -40,6 +40,7 @@ function Router() {
       
       {/* Patient Routes */}
       <Route path="/patient/login" component={PatientLogin} />
+      <Route path="/patient" component={PatientHome} />
       <Route path="/patient/home" component={PatientHome} />
       <Route path="/patient/intake" component={Intake} />
       <Route path="/patient/consult-waiting" component={ConsultWaiting} />
