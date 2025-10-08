@@ -1,0 +1,245 @@
+# “Mediconnect — Spec-Driven **Skeleton & Plug-and-Play** MVP — ONE-SHOT BUILD PROMPT (for an autonomous agent)”
+
+## 0) Mission & Ground Truth
+
+Build a **modular, extensible skeleton** of Mediconnect that is easy to grow via **plug-and-play modules**. Everything is **spec-driven** and **configurable**, not hard-wired. When the spec is silent, pick the **smallest safe default** and document it in the README.
+
+Authoritative truths to mirror (high level):
+
+* WhatsApp-first auth/consults (stubbed for v0).
+* HaaS model with GP as the front door; curated referrals (no patient-browsing marketplace).
+* Digital Rx with QR + PDF fallback that disables the QR; pharmacies see item-only (no PII).
+* Diagnostics are specialist-owned with minimal PII for labs.
+
+> Owner constraint: **No real integrations** in v0 (WhatsApp, maps, payments, identity). Use **ports & adapters** with stub adapters enabled by config.
+
+---
+
+## 1) Output Contract (What you deliver)
+
+Produce a **running web app** (Next.js + TypeScript + Tailwind) that compiles cleanly and renders the **same minimal surfaces** as the previous barebones spec (patient + 4 partner portals), **but implemented as a modular skeleton** with:
+
+* **Clean “ports & adapters” boundaries** (aka hexagonal): domain “ports” (interfaces) + swappable “adapters” (stubs now, real later).
+* **Config-driven module registry** (JSON or TS config) to enable/disable features and swap adapters **without code edits**.
+* **Feature flags** gating UI and capabilities.
+* **Contracts package** for shared types & API specs (OpenAPI file stub).
+* **In-memory data repo** implementing domain ports (drop-in replaceable with real DB later).
+* **README** explaining how to add/replace modules (adapters, features, routes) and where to plug a backend.
+
+---
+
+## 2) Monorepo-Ready Skeleton (but single app works too)
+
+If convenient, scaffold a minimal monorepo; otherwise keep a single app with the **same package boundaries**:
+
+```
+mediconnect/
+├─ apps/
+│  └─ web/                       # Next.js app (file-system routes)
+├─ packages/
+│  ├─ contracts/                 # Shared DTOS, zod schemas, OpenAPI (stub), enums
+│  ├─ domain/                    # Pure domain: entities, use-cases, ports (interfaces)
+│  ├─ adapters/                  # Infra adapters (stubs): auth, messaging, qr, storage
+│  ├─ ui/                        # Reusable UI components (cards, tables, ComingSoon, TabNav)
+│  └─ feature-flags/             # Central FLAGS + typed accessors
+├─ specs/
+│  ├─ api.openapi.yaml           # API contract (placeholder endpoints)
+│  └─ spec.md                    # Short spec stub & TODOs
+└─ toolkit/                      # Dev scripts: codegen, lint, test helpers
+```
+
+> If not using Turborepo, keep `packages/*` as local workspaces via npm/pnpm/yarn.
+
+---
+
+## 3) Ports & Adapters (Dependency Inversion)
+
+Define **ports (interfaces)** in `packages/domain` and **default stub adapters** in `packages/adapters`. No UI imports domain directly—UI calls **use-cases** which depend on **ports**.
+
+### Required Ports
+
+* `AuthPort`: `requestOtp(phone)`, `verifyOtp(code)`, `mockLogin(email|phone, role)`
+* `ConsultPort`: `startIntake(payload)`, `queueConsult(patientId)`, `listConsults(role,id)`
+* `ReferralPort`: `proposeSpecialists(gpId, patientId)`, `createReferral(…)`
+* `PrescriptionPort`: `listPrescriptions(patientId)`, `getPrescription(id)`, `renderQr(id)`, `markPdfDownloaded(id)`
+* `PharmacyPort`: `resolveQrToken(token)` → `{ items[], meta(noPII:true) }`
+* `DiagnosticsPort`: `listOrders(patientId|labId)`, `uploadResult(orderId, file)`
+* `NotificationPort`: `notify(topic, payload)` (stub)
+* `StoragePort`: `put(file)`, `get(url)` (stub)
+* `AuditPort`: `log(event, actor, resource, meta)`
+
+### Default Adapters (stubs)
+
+* `auth.whatsappStub` (returns deterministic fake OTP flow)
+* `messaging.whatsappStub` (no-op)
+* `qr.localStub` (generates non-secure tokens)
+* `storage.localStub` (in-memory URL)
+* `db.memoryRepo` (backing repositories implementing domain ports)
+
+Adapters are **selected via config**, not imports.
+
+---
+
+## 4) Config-Driven Module Registry
+
+Create `apps/web/app.config.ts`:
+
+```ts
+export const FLAGS = {
+  AUTH_WHATSAPP: false,
+  MAPS: false,
+  PAYMENTS: false,
+  REAL_QR: false,
+  REAL_UPLOADS: false,
+} as const;
+
+export const REGISTRY = {
+  auth: 'auth.whatsappStub',
+  messaging: 'messaging.whatsappStub',
+  qr: FLAGS.REAL_QR ? 'qr.vendorX' : 'qr.localStub',
+  storage: FLAGS.REAL_UPLOADS ? 'storage.s3' : 'storage.localStub',
+  db: 'db.memoryRepo',
+} as const;
+```
+
+At app bootstrap, **resolve adapters by string key** (simple map). Never import concrete adapters directly inside use-cases.
+
+---
+
+## 5) Routes & Screens (same minimal surfaces, lazy-loaded)
+
+### Shared
+
+* `/` role chooser; `/legal/terms`, `/legal/privacy` (static stubs).
+
+### Patient
+
+* `/patient/login` (mock sign-in; show “WhatsApp OTP coming soon”).
+* `/patient/home` tabs: Specialists, Pharmacy, Care, Diagnostics, Profile; **AI Assistant hero** → `/patient/intake`.
+* `/patient/intake` (3–5 static questions) → **Submit** → `/patient/consult-waiting`.
+* `/patient/consult-waiting` (state mock).
+* `/patient/prescriptions` → list; `/patient/prescriptions/[id]` → items + **QR panel** + **Download PDF** (toggles “QR disabled” UI state).
+* `/patient/diagnostics` → orders with statuses; one **Download Results** (static).
+* `/patient/profile` → consents + notification prefs (static toggles).
+
+**Any other link ⇒ `<ComingSoon/>`** with Notify-me capture.
+
+### Partner Portals
+
+* **GP**: `/gp/login` → `/gp` tabs: Live Requests, Completed, Chats (read-only), History, Profile.
+* **Specialist**: `/specialist/login` → `/specialist` tabs: Requested, Current, History, Profile; WA buttons disabled with tooltip.
+* **Pharmacy**: `/pharmacy/login` → `/pharmacy/scanner` (Paste QR token → Verify → item-only details; no PII).
+* **Diagnostics**: `/diagnostics/login` → `/diagnostics/orders` (minimal PII columns + fake upload).
+
+> **All pages lazy-load** feature modules to keep coupling low and enable future extraction.
+
+---
+
+## 6) Reusable UI Kit (`packages/ui`)
+
+Ship **headless + Tailwind-styled** components:
+
+* `<ComingSoon feature="…" onNotify={(v)=>…} />`
+* `<TabNav tabs=[…] />`
+* `<Card>`, `<Table>`, `<StatusChip status="awaiting|collected|ready" />`
+* `<QRPanel disabledReason? />`
+* `<StaticChatThread messages={…} />`
+* `<RoleLogin role="patient|gp|specialist|pharmacy|diagnostics" />`
+
+---
+
+## 7) Contracts & Validation (`packages/contracts`)
+
+* **Types/DTOs** for: `User`, `Consult`, `Message`, `Referral`, `Appointment`, `Prescription{items}`, `PharmacyClaim`, `LabOrder`.
+* **Zod** schemas with `parse()` helpers.
+* **OpenAPI stub** in `/specs/api.openapi.yaml` defining minimal paths (auth, consults, prescriptions, labs). Add a `codegen` script placeholder.
+
+---
+
+## 8) Domain (`packages/domain`)
+
+* **Entities** (plain TS types or classes) and **use-cases** (pure functions) that depend only on **ports**.
+* **Policy helpers** (e.g., “PDF download disables QR” rule) as pure functions + unit tests.
+* **No framework imports** here.
+
+Example use-case signature:
+
+```ts
+export async function getPharmacyViewByToken(
+  deps: { prescriptions: PrescriptionPort },
+  token: string
+): Promise<ItemOnlyView> { … }
+```
+
+---
+
+## 9) Adapters (`packages/adapters`)
+
+* Implement each **Port** with a **stub adapter**.
+* Provide a **factory**: `makeAdapters(REGISTRY)` returning concrete instances.
+* Keep **one file per adapter**; future real vendors add parallel files with identical exported shapes.
+
+---
+
+## 10) Feature Flags & Guards (`packages/feature-flags`)
+
+* Typed flags + `useFlag('REAL_QR')` hook.
+* `<FlagGuard flag="…">` to wrap components.
+* All disabled features render `<ComingSoon/>`.
+
+---
+
+## 11) Data Fixtures (in-memory only)
+
+Place JSON in `apps/web/data/*.json`:
+
+* One of each role user.
+* One consult with **AI intake summary** (string).
+* One active Rx (2 items) + `qrToken` string. Toggling **Download PDF** flips a local `qrDisabled` boolean.
+* Three diagnostics orders across statuses.
+
+---
+
+## 12) Acceptance Criteria (must pass)
+
+* Root role chooser → each role mock-logs in → lands on light portal.
+* Patient happy-path: login → intake → consult-waiting → prescriptions → Rx detail (QR + PDF toggles disabled UI) → diagnostics (download static result) → profile (toggle consents).
+* GP: lists across tabs; Specialist: requested/current/history + disabled WA join; Pharmacy: token → item-only; Diagnostics: minimal-PII orders + fake upload.
+* **Swappability**: Changing `REGISTRY.qr` or `REGISTRY.storage` to a (nonexistent) vendor name should fail fast with a clear error **without touching any page code**.
+* **No import from concrete adapters in domain/use-cases** (enforced by lint rule or path alias).
+
+---
+
+## 13) Dev Experience & README (what to document)
+
+* How to run (`pnpm dev` / `npm run dev`).
+* **How to add a new adapter** (e.g., real WhatsApp, S3, real QR): file location, exported factory, registry key, and a 3-step checklist.
+* **How to add a new feature module** (route + lazy boundary + flags + slice in contracts/domain).
+* **How to swap in a real DB**: implement repo ports under `packages/adapters/db.prisma` (placeholder) and flip `REGISTRY.db`.
+* **Spec-first workflow**: edit `/specs/api.openapi.yaml` and `/specs/spec.md`, then (future) run codegen.
+
+---
+
+## 14) Non-Goals (explicit for v0)
+
+* No real OTP/WA/video/maps/payments/storage.
+* No persistence beyond memory JSON.
+* No write flows except Notify-me and fake lab upload.
+* No real QR security/validation, partner SSO, or PII in pharmacy UI.
+
+---
+
+## 15) Delivery
+
+* Repo with `apps/web`, `packages/*`, `specs/*`, `toolkit/*`, root `README.md`.
+* All routes compile; pages load with **zero runtime errors**.
+* Unit tests for at least: **QR-disable policy**, **Pharmacy item-only projection**, and **Diagnostics minimal-PII projection** (domain-level, no framework).
+
+---
+
+### Notes for the Agent
+
+* Prefer **composition over inheritance** in UI and adapters.
+* Keep **public surfaces tiny**; everything behind ports.
+* Any ambiguity → pick the smallest compliant behavior and add a `// TODO(spec):` with a one-liner in README “Open questions”.
+* Keep file names deterministic and small; no dead code.
