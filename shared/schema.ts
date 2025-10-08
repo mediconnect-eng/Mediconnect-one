@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { sql, relations } from "drizzle-orm";
 import { pgTable, text, varchar, timestamp, jsonb, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -22,7 +22,7 @@ export type ReferralStatus = "proposed" | "accepted" | "completed";
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
-  phone: text("phone").notNull().unique(),
+  phone: text("phone").unique(),
   email: text("email"),
   role: text("role").notNull().$type<UserRole>(),
   metadata: jsonb("metadata"),
@@ -31,8 +31,8 @@ export const users = pgTable("users", {
 // Consults table
 export const consults = pgTable("consults", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  patientId: varchar("patient_id").notNull(),
-  gpId: varchar("gp_id"),
+  patientId: varchar("patient_id").notNull().references(() => users.id),
+  gpId: varchar("gp_id").references(() => users.id),
   status: text("status").notNull().$type<ConsultStatus>(),
   intakeSummary: text("intake_summary"),
   intakeData: jsonb("intake_data"),
@@ -43,8 +43,8 @@ export const consults = pgTable("consults", {
 // Messages table
 export const messages = pgTable("messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  consultId: varchar("consult_id").notNull(),
-  senderId: varchar("sender_id").notNull(),
+  consultId: varchar("consult_id").notNull().references(() => consults.id),
+  senderId: varchar("sender_id").notNull().references(() => users.id),
   content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -52,8 +52,8 @@ export const messages = pgTable("messages", {
 // Prescriptions table
 export const prescriptions = pgTable("prescriptions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  patientId: varchar("patient_id").notNull(),
-  consultId: varchar("consult_id"),
+  patientId: varchar("patient_id").notNull().references(() => users.id),
+  consultId: varchar("consult_id").references(() => consults.id),
   status: text("status").notNull().$type<PrescriptionStatus>(),
   items: jsonb("items").notNull(),
   qrToken: text("qr_token"),
@@ -65,9 +65,9 @@ export const prescriptions = pgTable("prescriptions", {
 // Referrals table
 export const referrals = pgTable("referrals", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  patientId: varchar("patient_id").notNull(),
-  gpId: varchar("gp_id").notNull(),
-  specialistId: varchar("specialist_id"),
+  patientId: varchar("patient_id").notNull().references(() => users.id),
+  gpId: varchar("gp_id").notNull().references(() => users.id),
+  specialistId: varchar("specialist_id").references(() => users.id),
   status: text("status").notNull().$type<ReferralStatus>(),
   reason: text("reason").notNull(),
   notes: text("notes"),
@@ -77,9 +77,9 @@ export const referrals = pgTable("referrals", {
 // Diagnostics orders table
 export const diagnosticsOrders = pgTable("diagnostics_orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  patientId: varchar("patient_id").notNull(),
-  specialistId: varchar("specialist_id").notNull(),
-  labId: varchar("lab_id"),
+  patientId: varchar("patient_id").notNull().references(() => users.id),
+  specialistId: varchar("specialist_id").notNull().references(() => users.id),
+  labId: varchar("lab_id").references(() => users.id),
   status: text("status").notNull().$type<DiagnosticsStatus>(),
   testType: text("test_type").notNull(),
   resultUrl: text("result_url"),
@@ -142,3 +142,82 @@ export type IntakeFormData = {
   medications?: string;
   allergies?: string;
 };
+
+// Drizzle relations
+export const usersRelations = relations(users, ({ many }) => ({
+  consultAsPatient: many(consults, { relationName: "patientConsults" }),
+  consultAsGp: many(consults, { relationName: "gpConsults" }),
+  prescriptions: many(prescriptions),
+  referralsAsPatient: many(referrals, { relationName: "patientReferrals" }),
+  referralsAsGp: many(referrals, { relationName: "gpReferrals" }),
+  diagnosticsOrders: many(diagnosticsOrders),
+}));
+
+export const consultsRelations = relations(consults, ({ one, many }) => ({
+  patient: one(users, {
+    fields: [consults.patientId],
+    references: [users.id],
+    relationName: "patientConsults",
+  }),
+  gp: one(users, {
+    fields: [consults.gpId],
+    references: [users.id],
+    relationName: "gpConsults",
+  }),
+  messages: many(messages),
+  prescriptions: many(prescriptions),
+}));
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+  consult: one(consults, {
+    fields: [messages.consultId],
+    references: [consults.id],
+  }),
+  sender: one(users, {
+    fields: [messages.senderId],
+    references: [users.id],
+  }),
+}));
+
+export const prescriptionsRelations = relations(prescriptions, ({ one }) => ({
+  patient: one(users, {
+    fields: [prescriptions.patientId],
+    references: [users.id],
+  }),
+  consult: one(consults, {
+    fields: [prescriptions.consultId],
+    references: [consults.id],
+  }),
+}));
+
+export const referralsRelations = relations(referrals, ({ one }) => ({
+  patient: one(users, {
+    fields: [referrals.patientId],
+    references: [users.id],
+    relationName: "patientReferrals",
+  }),
+  gp: one(users, {
+    fields: [referrals.gpId],
+    references: [users.id],
+    relationName: "gpReferrals",
+  }),
+  specialist: one(users, {
+    fields: [referrals.specialistId],
+    references: [users.id],
+  }),
+}));
+
+export const diagnosticsOrdersRelations = relations(diagnosticsOrders, ({ one }) => ({
+  patient: one(users, {
+    fields: [diagnosticsOrders.patientId],
+    references: [users.id],
+  }),
+  specialist: one(users, {
+    fields: [diagnosticsOrders.specialistId],
+    references: [users.id],
+  }),
+  lab: one(users, {
+    fields: [diagnosticsOrders.labId],
+    references: [users.id],
+  }),
+}));

@@ -33,12 +33,19 @@ export class WhatsAppAuthStub implements AuthPort {
   async mockLogin(identifier: string, role: UserRole): Promise<User> {
     console.log(`[WhatsAppStub] Mock login: ${identifier} as ${role}`);
     
-    // Check if user exists by phone (for non-email identifiers)
-    if (!identifier.includes('@')) {
-      const existingUser = await this.storage.getUserByPhone(identifier);
-      if (existingUser) {
-        console.log(`[WhatsAppStub] Found existing user: ${existingUser.id}`);
-        return existingUser;
+    // Try to find existing user by phone first
+    const existingUserByPhone = await this.storage.getUserByPhone(identifier);
+    if (existingUserByPhone) {
+      console.log(`[WhatsAppStub] Found existing user by phone: ${existingUserByPhone.id}`);
+      return existingUserByPhone;
+    }
+    
+    // If not found and identifier contains @, try to find by email
+    if (identifier.includes('@')) {
+      const existingUserByEmail = await this.storage.getUserByEmail(identifier);
+      if (existingUserByEmail) {
+        console.log(`[WhatsAppStub] Found existing user by email: ${existingUserByEmail.id}`);
+        return existingUserByEmail;
       }
     }
     
@@ -53,7 +60,7 @@ export class WhatsAppAuthStub implements AuthPort {
     console.log(`[WhatsAppStub] Creating new user for ${identifier}`);
     const newUser = await this.storage.createUser({
       name: roleNames[role],
-      phone: identifier.includes('@') ? '' : identifier,
+      phone: identifier.includes('@') ? null : identifier,
       email: identifier.includes('@') ? identifier : null,
       role,
       metadata: {}

@@ -5,14 +5,17 @@ import type {
   Prescription, InsertPrescription,
   Referral, InsertReferral,
   DiagnosticsOrder, InsertDiagnosticsOrder,
-  UserRole, PrescriptionItem
+  UserRole
 } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { users, consults, messages, prescriptions, referrals, diagnosticsOrders } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, or, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByPhone(phone: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
   // Consults
@@ -44,327 +47,157 @@ export interface IStorage {
   updateDiagnosticsOrder(id: string, updates: Partial<DiagnosticsOrder>): Promise<DiagnosticsOrder>;
 }
 
-export class MemStorage implements IStorage {
-  private users = new Map<string, User>();
-  private consults = new Map<string, Consult>();
-  private messages = new Map<string, Message>();
-  private prescriptions = new Map<string, Prescription>();
-  private referrals = new Map<string, Referral>();
-  private diagnosticsOrders = new Map<string, DiagnosticsOrder>();
-
-  constructor() {
-    this.seedData();
-  }
-
-  private seedData() {
-    // Seed users
-    const patientId = randomUUID();
-    const gpId = randomUUID();
-    const specialistId = randomUUID();
-    const pharmacyId = randomUUID();
-    const labId = randomUUID();
-
-    this.users.set(patientId, {
-      id: patientId,
-      name: "John Doe",
-      phone: "1234567890",
-      email: "patient@demo.com",
-      role: "patient",
-      metadata: {}
-    });
-
-    this.users.set(gpId, {
-      id: gpId,
-      name: "Dr. Sarah Johnson",
-      phone: "+1234567891",
-      email: "gp@demo.com",
-      role: "gp",
-      metadata: {}
-    });
-
-    this.users.set(specialistId, {
-      id: specialistId,
-      name: "Dr. David Williams",
-      phone: "+1234567892",
-      email: "specialist@demo.com",
-      role: "specialist",
-      metadata: { specialty: "Cardiology" }
-    });
-
-    this.users.set(pharmacyId, {
-      id: pharmacyId,
-      name: "HealthCare Pharmacy",
-      phone: "+1234567893",
-      email: "pharmacy@demo.com",
-      role: "pharmacy",
-      metadata: {}
-    });
-
-    this.users.set(labId, {
-      id: labId,
-      name: "HealthLab Diagnostics",
-      phone: "+1234567894",
-      email: "lab@demo.com",
-      role: "diagnostics",
-      metadata: {}
-    });
-
-    // Seed consult
-    const consultId = randomUUID();
-    this.consults.set(consultId, {
-      id: consultId,
-      patientId,
-      gpId,
-      status: "completed",
-      intakeSummary: "Patient reports fever and headache for 3 days. Moderate severity.",
-      intakeData: {
-        symptoms: "Fever and headache",
-        duration: "3 days",
-        severity: "moderate",
-        medications: "None",
-        allergies: "None"
-      },
-      createdAt: new Date(Date.now() - 86400000),
-      updatedAt: new Date()
-    });
-
-    // Seed prescription
-    const prescriptionId = randomUUID();
-    const items: PrescriptionItem[] = [
-      {
-        id: "1",
-        name: "Amoxicillin",
-        dosage: "500mg",
-        frequency: "3 times daily",
-        duration: "7 days",
-        instructions: "Take with food"
-      },
-      {
-        id: "2",
-        name: "Ibuprofen",
-        dosage: "200mg",
-        frequency: "As needed for pain",
-        duration: "14 days",
-        instructions: "Do not exceed 6 tablets in 24 hours"
-      }
-    ];
-
-    this.prescriptions.set(prescriptionId, {
-      id: prescriptionId,
-      patientId,
-      consultId,
-      status: "active",
-      items,
-      qrToken: "QR-ABC123XYZ789",
-      qrDisabled: 0,
-      pdfDownloaded: 0,
-      createdAt: new Date()
-    });
-
-    // Seed diagnostics orders
-    const order1Id = randomUUID();
-    this.diagnosticsOrders.set(order1Id, {
-      id: order1Id,
-      patientId,
-      specialistId,
-      labId,
-      status: "completed",
-      testType: "Complete Blood Count (CBC)",
-      resultUrl: "local://results-cbc-001",
-      createdAt: new Date(Date.now() - 172800000),
-      updatedAt: new Date()
-    });
-
-    const order2Id = randomUUID();
-    this.diagnosticsOrders.set(order2Id, {
-      id: order2Id,
-      patientId,
-      specialistId,
-      labId: null,
-      status: "in_progress",
-      testType: "Lipid Panel",
-      resultUrl: null,
-      createdAt: new Date(Date.now() - 86400000),
-      updatedAt: new Date()
-    });
-  }
-
+export class DatabaseStorage implements IStorage {
   // Users
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByPhone(phone: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(u => u.phone === phone);
+    const [user] = await db.select().from(users).where(eq(users.phone, phone));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   // Consults
   async getConsult(id: string): Promise<Consult | undefined> {
-    return this.consults.get(id);
+    const [consult] = await db.select().from(consults).where(eq(consults.id, id));
+    return consult;
   }
 
   async listConsults(role: UserRole, userId: string): Promise<Consult[]> {
-    const allConsults = Array.from(this.consults.values());
-    
     if (role === "patient") {
-      return allConsults.filter(c => c.patientId === userId);
+      return db.select().from(consults).where(eq(consults.patientId, userId));
     } else if (role === "gp") {
-      return allConsults.filter(c => c.gpId === userId || !c.gpId);
+      return db.select().from(consults).where(
+        or(eq(consults.gpId, userId), isNull(consults.gpId))
+      );
+    } else if (role === "specialist" || role === "pharmacy" || role === "diagnostics") {
+      return [];
     }
-    
-    return allConsults;
+    return db.select().from(consults);
   }
 
   async createConsult(insertConsult: InsertConsult): Promise<Consult> {
-    const id = randomUUID();
-    const consult: Consult = {
-      ...insertConsult,
-      id,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.consults.set(id, consult);
+    const [consult] = await db.insert(consults).values(insertConsult).returning();
     return consult;
   }
 
   async updateConsult(id: string, updates: Partial<Consult>): Promise<Consult> {
-    const consult = this.consults.get(id);
-    if (!consult) throw new Error("Consult not found");
+    const [updated] = await db.update(consults)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(consults.id, id))
+      .returning();
     
-    const updated = { ...consult, ...updates, updatedAt: new Date() };
-    this.consults.set(id, updated);
+    if (!updated) throw new Error("Consult not found");
     return updated;
   }
 
   // Messages
   async listMessages(consultId: string): Promise<Message[]> {
-    return Array.from(this.messages.values())
-      .filter(m => m.consultId === consultId)
-      .sort((a, b) => (a.createdAt?.getTime() || 0) - (b.createdAt?.getTime() || 0));
+    return db.select().from(messages)
+      .where(eq(messages.consultId, consultId))
+      .orderBy(messages.createdAt);
   }
 
   async createMessage(insertMessage: InsertMessage): Promise<Message> {
-    const id = randomUUID();
-    const message: Message = {
-      ...insertMessage,
-      id,
-      createdAt: new Date()
-    };
-    this.messages.set(id, message);
+    const [message] = await db.insert(messages).values(insertMessage).returning();
     return message;
   }
 
   // Prescriptions
   async getPrescription(id: string): Promise<Prescription | undefined> {
-    return this.prescriptions.get(id);
+    const [prescription] = await db.select().from(prescriptions).where(eq(prescriptions.id, id));
+    return prescription;
   }
 
   async listPrescriptions(patientId: string): Promise<Prescription[]> {
-    return Array.from(this.prescriptions.values())
-      .filter(p => p.patientId === patientId);
+    return db.select().from(prescriptions).where(eq(prescriptions.patientId, patientId));
   }
 
   async createPrescription(insertPrescription: InsertPrescription): Promise<Prescription> {
-    const id = randomUUID();
-    const prescription: Prescription = {
-      ...insertPrescription,
-      id,
-      createdAt: new Date()
-    };
-    this.prescriptions.set(id, prescription);
+    const [prescription] = await db.insert(prescriptions).values(insertPrescription).returning();
     return prescription;
   }
 
   async updatePrescription(id: string, updates: Partial<Prescription>): Promise<Prescription> {
-    const prescription = this.prescriptions.get(id);
-    if (!prescription) throw new Error("Prescription not found");
+    const [updated] = await db.update(prescriptions)
+      .set(updates)
+      .where(eq(prescriptions.id, id))
+      .returning();
     
-    const updated = { ...prescription, ...updates };
-    this.prescriptions.set(id, updated);
+    if (!updated) throw new Error("Prescription not found");
     return updated;
   }
 
   async getPrescriptionByQrToken(token: string): Promise<Prescription | undefined> {
-    return Array.from(this.prescriptions.values())
-      .find(p => p.qrToken === token);
+    const [prescription] = await db.select().from(prescriptions).where(eq(prescriptions.qrToken, token));
+    return prescription;
   }
 
   // Referrals
   async getReferral(id: string): Promise<Referral | undefined> {
-    return this.referrals.get(id);
+    const [referral] = await db.select().from(referrals).where(eq(referrals.id, id));
+    return referral;
   }
 
   async listReferrals(userId: string, role: UserRole): Promise<Referral[]> {
-    const allReferrals = Array.from(this.referrals.values());
-    
     if (role === "patient") {
-      return allReferrals.filter(r => r.patientId === userId);
+      return db.select().from(referrals).where(eq(referrals.patientId, userId));
     } else if (role === "gp") {
-      return allReferrals.filter(r => r.gpId === userId);
+      return db.select().from(referrals).where(eq(referrals.gpId, userId));
     } else if (role === "specialist") {
-      return allReferrals.filter(r => r.specialistId === userId);
+      return db.select().from(referrals).where(eq(referrals.specialistId, userId));
     }
-    
-    return allReferrals;
+    return db.select().from(referrals);
   }
 
   async createReferral(insertReferral: InsertReferral): Promise<Referral> {
-    const id = randomUUID();
-    const referral: Referral = {
-      ...insertReferral,
-      id,
-      createdAt: new Date()
-    };
-    this.referrals.set(id, referral);
+    const [referral] = await db.insert(referrals).values(insertReferral).returning();
     return referral;
   }
 
   // Diagnostics
   async getDiagnosticsOrder(id: string): Promise<DiagnosticsOrder | undefined> {
-    return this.diagnosticsOrders.get(id);
+    const [order] = await db.select().from(diagnosticsOrders).where(eq(diagnosticsOrders.id, id));
+    return order;
   }
 
   async listDiagnosticsOrders(userId: string, role: UserRole): Promise<DiagnosticsOrder[]> {
-    const allOrders = Array.from(this.diagnosticsOrders.values());
-    
     if (role === "patient") {
-      return allOrders.filter(o => o.patientId === userId);
+      return db.select().from(diagnosticsOrders).where(eq(diagnosticsOrders.patientId, userId));
     } else if (role === "specialist") {
-      return allOrders.filter(o => o.specialistId === userId);
+      return db.select().from(diagnosticsOrders).where(eq(diagnosticsOrders.specialistId, userId));
     } else if (role === "diagnostics") {
-      return allOrders.filter(o => o.labId === userId);
+      return db.select().from(diagnosticsOrders).where(eq(diagnosticsOrders.labId, userId));
     }
-    
-    return allOrders;
+    return db.select().from(diagnosticsOrders);
   }
 
   async createDiagnosticsOrder(insertOrder: InsertDiagnosticsOrder): Promise<DiagnosticsOrder> {
-    const id = randomUUID();
-    const order: DiagnosticsOrder = {
-      ...insertOrder,
-      id,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.diagnosticsOrders.set(id, order);
+    const [order] = await db.insert(diagnosticsOrders).values(insertOrder).returning();
     return order;
   }
 
   async updateDiagnosticsOrder(id: string, updates: Partial<DiagnosticsOrder>): Promise<DiagnosticsOrder> {
-    const order = this.diagnosticsOrders.get(id);
-    if (!order) throw new Error("Diagnostics order not found");
+    const [updated] = await db.update(diagnosticsOrders)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(diagnosticsOrders.id, id))
+      .returning();
     
-    const updated = { ...order, ...updates, updatedAt: new Date() };
-    this.diagnosticsOrders.set(id, updated);
+    if (!updated) throw new Error("Diagnostics order not found");
     return updated;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
