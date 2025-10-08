@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StatusChip } from "@/components/StatusChip";
-import { ArrowLeft, Microscope, Download, Loader2 } from "lucide-react";
+import { TabNav, type Tab } from "@/components/TabNav";
+import { ArrowLeft, Microscope, Download, Loader2, UserCog, Pill, Heart, User, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { getUserFromStorage } from "@/lib/storage";
@@ -22,6 +23,19 @@ export default function Diagnostics() {
     enabled: !!userId && !!role
   });
 
+  const tabs: Tab[] = [
+    { id: "specialists", label: "Specialists", href: "/patient/home", icon: <UserCog className="h-5 w-5" /> },
+    { id: "pharmacy", label: "Pharmacy", href: "/patient/home", icon: <Pill className="h-5 w-5" /> },
+    { id: "care", label: "Care", href: "/patient/home", icon: <Heart className="h-5 w-5" /> },
+    { id: "diagnostics", label: "Diagnostics", href: "/patient/diagnostics", icon: <Microscope className="h-5 w-5" /> },
+    { id: "profile", label: "Profile", href: "/patient/profile", icon: <User className="h-5 w-5" /> },
+  ];
+
+  const handleLogout = () => {
+    localStorage.removeItem("mediconnect_user");
+    setLocation("/");
+  };
+
   const handleDownloadResults = (orderId: string) => {
     toast({
       title: "Results Downloaded",
@@ -33,21 +47,22 @@ export default function Diagnostics() {
     return (
       <div className="min-h-screen bg-background">
         <header className="border-b border-border bg-card">
-          <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-            <Button
-              variant="ghost"
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-foreground">Mediconnect</h1>
+            <Button 
+              variant="ghost" 
               size="sm"
-              onClick={() => setLocation("/patient/home")}
-              data-testid="button-back"
+              onClick={handleLogout}
+              data-testid="button-logout"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Diagnostics</h1>
-              <p className="text-sm text-muted-foreground">Track your lab tests and results</p>
-            </div>
           </div>
         </header>
+
+        <TabNav tabs={tabs} />
+
         <main className="container mx-auto px-4 py-8 max-w-5xl">
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -61,21 +76,22 @@ export default function Diagnostics() {
     return (
       <div className="min-h-screen bg-background">
         <header className="border-b border-border bg-card">
-          <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-            <Button
-              variant="ghost"
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-foreground">Mediconnect</h1>
+            <Button 
+              variant="ghost" 
               size="sm"
-              onClick={() => setLocation("/patient/home")}
-              data-testid="button-back"
+              onClick={handleLogout}
+              data-testid="button-logout"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Diagnostics</h1>
-              <p className="text-sm text-muted-foreground">Track your lab tests and results</p>
-            </div>
           </div>
         </header>
+
+        <TabNav tabs={tabs} />
+
         <main className="container mx-auto px-4 py-8 max-w-5xl">
           <Card className="p-12 text-center">
             <p className="text-destructive">Error loading orders: {error.message}</p>
@@ -88,21 +104,21 @@ export default function Diagnostics() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Button
-            variant="ghost"
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-foreground">Mediconnect</h1>
+          <Button 
+            variant="ghost" 
             size="sm"
-            onClick={() => setLocation("/patient/home")}
-            data-testid="button-back"
+            onClick={handleLogout}
+            data-testid="button-logout"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <LogOut className="h-4 w-4 mr-2" />
+            Logout
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Diagnostics</h1>
-            <p className="text-sm text-muted-foreground">Track your lab tests and results</p>
-          </div>
         </div>
       </header>
+
+      <TabNav tabs={tabs} />
 
       <main className="container mx-auto px-4 py-8 max-w-5xl">
         {orders.length === 0 ? (
@@ -144,7 +160,7 @@ export default function Diagnostics() {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Order Date</p>
-                      <p className="font-medium text-foreground">{new Date(order.createdAt).toLocaleDateString()}</p>
+                      <p className="font-medium text-foreground">{order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}</p>
                     </div>
                   </div>
 

@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, User, Bell, Shield, FileText } from "lucide-react";
+import { TabNav, type Tab } from "@/components/TabNav";
+import { ArrowLeft, User, Bell, Shield, FileText, UserCog, Pill, Heart, Microscope, LogOut } from "lucide-react";
 
 export default function Profile() {
   const [, setLocation] = useLocation();
@@ -19,24 +20,37 @@ export default function Profile() {
     sms: true
   });
 
+  const tabs: Tab[] = [
+    { id: "specialists", label: "Specialists", href: "/patient/home", icon: <UserCog className="h-5 w-5" /> },
+    { id: "pharmacy", label: "Pharmacy", href: "/patient/home", icon: <Pill className="h-5 w-5" /> },
+    { id: "care", label: "Care", href: "/patient/home", icon: <Heart className="h-5 w-5" /> },
+    { id: "diagnostics", label: "Diagnostics", href: "/patient/diagnostics", icon: <Microscope className="h-5 w-5" /> },
+    { id: "profile", label: "Profile", href: "/patient/profile", icon: <User className="h-5 w-5" /> },
+  ];
+
+  const handleLogout = () => {
+    localStorage.removeItem("mediconnect_user");
+    setLocation("/");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Button
-            variant="ghost"
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-foreground">Mediconnect</h1>
+          <Button 
+            variant="ghost" 
             size="sm"
-            onClick={() => setLocation("/patient/home")}
-            data-testid="button-back"
+            onClick={handleLogout}
+            data-testid="button-logout"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <LogOut className="h-4 w-4 mr-2" />
+            Logout
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Profile Settings</h1>
-            <p className="text-sm text-muted-foreground">Manage your preferences and consents</p>
-          </div>
         </div>
       </header>
+
+      <TabNav tabs={tabs} />
 
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="space-y-6">
