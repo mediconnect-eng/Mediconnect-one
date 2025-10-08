@@ -90,7 +90,7 @@ export default function PharmacyScanner() {
                   required
                 />
                 <p className="text-xs text-muted-foreground text-center">
-                  Try: QR-ABC123XYZ789 (demo token)
+                  Try: QR-ABC123XYZ789 (test token)
                 </p>
               </div>
 

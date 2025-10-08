@@ -1,29 +1,32 @@
-import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StatusChip } from "@/components/StatusChip";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { 
   Microscope, 
   LogOut,
   Upload,
-  CheckCircle2,
   Loader2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { getUserFromStorage } from "@/lib/storage";
+import { ObjectUploader } from "@/components/ObjectUploader";
+import type { UploadResult } from "@uppy/core";
 
 export default function DiagnosticsOrders() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [uploadingFor, setUploadingFor] = useState<string | null>(null);
 
-  const userData = getUserFromStorage() || {};
+  const userData = getUserFromStorage();
+  if (!userData?.id) {
+    toast({ title: "Error", description: "User not logged in", variant: "destructive" });
+    setLocation("/");
+    return null;
+  }
+
   const userId = userData.id;
   const role = userData.role;
 
@@ -34,15 +37,15 @@ export default function DiagnosticsOrders() {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: ({ orderId, fileData }: { orderId: string; fileData: any }) => 
-      api.diagnostics.uploadResult(orderId, fileData),
+    mutationFn: ({ orderId, uploadURL }: { orderId: string; uploadURL: string }) => {
+      return apiRequest("PUT", `/api/diagnostics/orders/${orderId}/upload`, { uploadURL, userId });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/diagnostics/orders", userId, role] });
       toast({
         title: "Results Uploaded",
         description: "Lab results have been successfully uploaded",
       });
-      setUploadingFor(null);
     },
     onError: (error: any) => {
       toast({
@@ -58,12 +61,21 @@ export default function DiagnosticsOrders() {
     setLocation("/");
   };
 
-  const handleFileUpload = (orderId: string) => {
-    setUploadingFor(orderId);
+  const handleGetUploadParameters = async () => {
+    const response = await apiRequest("POST", "/api/objects/upload", {});
+    return {
+      method: "PUT" as const,
+      url: response.uploadURL,
+    };
   };
 
-  const handleUploadComplete = (orderId: string) => {
-    uploadMutation.mutate({ orderId, fileData: "mock-file-data" });
+  const handleUploadComplete = (orderId: string) => (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    if (result.successful && result.successful.length > 0) {
+      const uploadURL = result.successful[0].uploadURL;
+      if (uploadURL) {
+        uploadMutation.mutate({ orderId, uploadURL });
+      }
+    }
   };
 
   if (isLoading) {
@@ -165,7 +177,7 @@ export default function DiagnosticsOrders() {
                         <StatusChip status={order.status} />
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Order ID: <span className="font-mono">{order.orderId}</span>
+                        Order ID: <span className="font-mono">{order.id}</span>
                       </p>
                     </div>
                   </div>
@@ -178,63 +190,22 @@ export default function DiagnosticsOrders() {
                   </div>
                   <div>
                     <p className="text-muted-foreground">Order Date</p>
-                    <p className="font-medium text-foreground">{new Date(order.createdAt).toLocaleDateString()}</p>
+                    <p className="font-medium text-foreground">{order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}</p>
                   </div>
                 </div>
 
-                {uploadingFor === order.id ? (
-                  <div className="pt-4 border-t border-border space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor={`file-${order.id}`}>Upload Results</Label>
-                      <Input
-                        id={`file-${order.id}`}
-                        type="file"
-                        data-testid={`input-upload-${order.id}`}
-                        className="cursor-pointer"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleUploadComplete(order.id)}
-                        data-testid={`button-upload-confirm-${order.id}`}
-                        disabled={uploadMutation.isPending}
-                      >
-                        {uploadMutation.isPending ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Uploading...
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle2 className="mr-2 h-4 w-4" />
-                            Upload
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setUploadingFor(null)}
-                        data-testid={`button-upload-cancel-${order.id}`}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="pt-4 border-t border-border">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleFileUpload(order.id)}
-                      data-testid={`button-upload-${order.id}`}
-                    >
-                      <Upload className="mr-2 h-4 w-4" />
-                      Upload Results
-                    </Button>
-                  </div>
-                )}
+                <div className="pt-4 border-t border-border">
+                  <ObjectUploader
+                    maxNumberOfFiles={1}
+                    maxFileSize={52428800}
+                    onGetUploadParameters={handleGetUploadParameters}
+                    onComplete={handleUploadComplete(order.id)}
+                    buttonClassName="h-9"
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload Results
+                  </ObjectUploader>
+                </div>
               </div>
             </Card>
           ))}

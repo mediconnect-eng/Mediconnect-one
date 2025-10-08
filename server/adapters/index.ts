@@ -1,6 +1,6 @@
 import { WhatsAppAuthStub } from "./auth.whatsappStub";
 import { WhatsAppMessagingStub } from "./messaging.whatsappStub";
-import { QRLocalStub } from "./qr.localStub";
+import { QRCodeAdapter } from "./qr.qrcodeAdapter";
 import { StorageLocalStub } from "./storage.localStub";
 import { AuditStub } from "./audit.stub";
 import { storage } from "../storage";
@@ -9,7 +9,7 @@ import type { REGISTRY } from "@shared/config";
 export interface Adapters {
   auth: WhatsAppAuthStub;
   messaging: WhatsAppMessagingStub;
-  qr: QRLocalStub;
+  qr: QRCodeAdapter;
   storage: StorageLocalStub;
   audit: AuditStub;
 }
@@ -30,7 +30,7 @@ export function makeAdapters(registry: typeof REGISTRY): Adapters {
   }
 
   if (registry.qr === 'qr.localStub') {
-    adapters.qr = new QRLocalStub();
+    adapters.qr = new QRCodeAdapter();
   } else {
     throw new Error(`Unknown QR adapter: ${registry.qr}`);
   }

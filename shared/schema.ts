@@ -59,6 +59,7 @@ export const prescriptions = pgTable("prescriptions", {
   qrToken: text("qr_token"),
   qrDisabled: integer("qr_disabled").default(0),
   pdfDownloaded: integer("pdf_downloaded").default(0),
+  fileUrl: text("file_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -88,12 +89,22 @@ export const diagnosticsOrders = pgTable("diagnostics_orders", {
 });
 
 // Zod schemas for validation
-export const insertUserSchema = createInsertSchema(users).omit({ id: true });
-export const insertConsultSchema = createInsertSchema(consults).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertUserSchema = createInsertSchema(users).omit({ id: true }).extend({
+  role: z.enum(["patient", "gp", "specialist", "pharmacy", "diagnostics"])
+});
+export const insertConsultSchema = createInsertSchema(consults).omit({ id: true, createdAt: true, updatedAt: true }).extend({
+  status: z.enum(["intake", "queued", "in_progress", "completed"])
+});
 export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, createdAt: true });
-export const insertPrescriptionSchema = createInsertSchema(prescriptions).omit({ id: true, createdAt: true });
-export const insertReferralSchema = createInsertSchema(referrals).omit({ id: true, createdAt: true });
-export const insertDiagnosticsOrderSchema = createInsertSchema(diagnosticsOrders).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertPrescriptionSchema = createInsertSchema(prescriptions).omit({ id: true, createdAt: true }).extend({
+  status: z.enum(["active", "dispensed", "expired"])
+});
+export const insertReferralSchema = createInsertSchema(referrals).omit({ id: true, createdAt: true }).extend({
+  status: z.enum(["proposed", "accepted", "completed"])
+});
+export const insertDiagnosticsOrderSchema = createInsertSchema(diagnosticsOrders).omit({ id: true, createdAt: true, updatedAt: true }).extend({
+  status: z.enum(["ordered", "sample_collected", "in_progress", "completed"])
+});
 
 // Type exports
 export type User = typeof users.$inferSelect;

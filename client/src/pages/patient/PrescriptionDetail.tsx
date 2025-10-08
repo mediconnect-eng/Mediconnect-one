@@ -113,7 +113,7 @@ export default function PrescriptionDetail() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">Prescription {params?.id}</h1>
-            <p className="text-sm text-muted-foreground">Issued: {new Date(prescription.createdAt).toLocaleDateString()}</p>
+            <p className="text-sm text-muted-foreground">Issued: {prescription.createdAt ? new Date(prescription.createdAt).toLocaleDateString() : 'N/A'}</p>
           </div>
         </div>
       </header>
@@ -131,20 +131,13 @@ export default function PrescriptionDetail() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">Issued Date</p>
-                    <p className="font-medium text-foreground">{new Date(prescription.createdAt).toLocaleDateString()}</p>
+                    <p className="font-medium text-foreground">{prescription.createdAt ? new Date(prescription.createdAt).toLocaleDateString() : 'N/A'}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Status</p>
                     <p className="font-medium text-foreground capitalize">{prescription.status}</p>
                   </div>
                 </div>
-
-                {prescription.notes && (
-                  <div className="bg-accent/20 border border-accent/40 rounded-lg p-4">
-                    <p className="text-sm text-accent-foreground font-medium">Important Notes</p>
-                    <p className="text-sm text-accent-foreground/80 mt-1">{prescription.notes}</p>
-                  </div>
-                )}
               </div>
             </Card>
 
@@ -192,7 +185,8 @@ export default function PrescriptionDetail() {
 
           <div className="space-y-6">
             <QRPanel
-              qrToken={prescription.qrDisabled ? undefined : prescription.qrToken}
+              prescriptionId={prescription.id}
+              qrToken={prescription.qrDisabled ? undefined : (prescription.qrToken || undefined)}
               disabledReason={prescription.qrDisabled ? "QR disabled after PDF download" : undefined}
             />
 
@@ -202,7 +196,7 @@ export default function PrescriptionDetail() {
                 variant="outline"
                 className="w-full"
                 onClick={handleDownloadPdf}
-                disabled={prescription.qrDisabled || downloadPdfMutation.isPending}
+                disabled={!!prescription.qrDisabled || downloadPdfMutation.isPending}
                 data-testid="button-download-pdf"
               >
                 {downloadPdfMutation.isPending ? (

@@ -140,6 +140,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/prescriptions/:id/qr-image", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { userId } = req.query as { userId?: string };
+      
+      // CRITICAL SECURITY: Verify user is authenticated
+      if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const prescription = await storage.getPrescription(id);
+      
+      if (!prescription) {
+        return res.status(404).json({ error: "Prescription not found" });
+      }
+
+      // CRITICAL SECURITY: Verify user has permission to view this prescription
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      // Check if user owns this prescription OR is authorized role (pharmacy/gp)
+      const isOwner = prescription.patientId === userId;
+      const isAuthorizedRole = user.role === "pharmacy" || user.role === "gp";
+      
+      if (!isOwner && !isAuthorizedRole) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+
+      if (!prescription.qrToken) {
+        return res.status(400).json({ error: "No QR token available" });
+      }
+
+      if (prescription.qrDisabled) {
+        return res.status(400).json({ error: "QR code is disabled" });
+      }
+
+      const qrDataUri = await adapters.qr.generateQR(prescription.qrToken);
+      await adapters.audit.log("qr_image_viewed", userId, id, { role: user.role });
+      res.json({ qrDataUri });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
   app.post("/api/prescriptions/:id/download-pdf", async (req, res) => {
     try {
       const { id } = req.params;
@@ -149,27 +195,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Prescription not found" });
       }
 
+      if (prescription.fileUrl) {
+        return res.json({ ...prescription, fileUrl: prescription.fileUrl });
+      }
+
       await adapters.qr.disableQr(id);
-
-      await storage.updatePrescription(id, {
-        pdfDownloaded: 1,
-        qrDisabled: 1
-      });
-
-      await adapters.audit.log("pdf_downloaded", prescription.patientId, id, {
-        qrDisabled: true
-      });
 
       const doc = new PDFDocument({ margin: 50 });
       const buffers: Buffer[] = [];
 
       doc.on('data', buffers.push.bind(buffers));
-      doc.on('end', () => {
+      doc.on('end', async () => {
         const pdfBuffer = Buffer.concat(buffers);
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="prescription-${id}.pdf"`);
-        res.setHeader('Content-Length', pdfBuffer.length);
-        res.send(pdfBuffer);
+        
+        const { ObjectStorageService } = await import("./objectStorage");
+        const objectStorageService = new ObjectStorageService();
+        
+        const fileUrl = await objectStorageService.uploadBuffer(pdfBuffer, "application/pdf");
+        
+        const objectFile = await objectStorageService.getObjectEntityFile(fileUrl);
+        const { setObjectAclPolicy } = await import("./objectAcl");
+        await setObjectAclPolicy(objectFile, {
+          owner: prescription.patientId,
+          visibility: "private",
+        });
+
+        const updated = await storage.updatePrescription(id, {
+          pdfDownloaded: 1,
+          qrDisabled: 1,
+          fileUrl
+        });
+
+        await adapters.audit.log("pdf_downloaded", prescription.patientId, id, {
+          qrDisabled: true,
+          fileUrl
+        });
+
+        res.json(updated);
       });
 
       doc.fontSize(20).text('PRESCRIPTION', { align: 'center' });
@@ -274,24 +336,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/diagnostics/orders/:id/upload", async (req, res) => {
+  app.put("/api/diagnostics/orders/:orderId/upload", async (req, res) => {
     try {
-      const { id } = req.params;
-      const { fileData } = req.body;
+      const { orderId } = req.params;
+      const { uploadURL, userId } = req.body;
+
+      if (!uploadURL) {
+        return res.status(400).json({ error: "uploadURL is required" });
+      }
+
+      if (!userId) {
+        return res.status(400).json({ error: "userId is required" });
+      }
+
+      const { ObjectStorageService } = await import("./objectStorage");
+      const objectStorageService = new ObjectStorageService();
       
-      const resultUrl = await adapters.storage.put(fileData);
-      
-      const updated = await storage.updateDiagnosticsOrder(id, {
+      const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
+        uploadURL,
+        {
+          owner: userId,
+          visibility: "private",
+        }
+      );
+
+      const updated = await storage.updateDiagnosticsOrder(orderId, {
         status: "completed",
-        resultUrl
+        resultUrl: objectPath
       });
 
-      await adapters.audit.log("results_uploaded", "lab", id, { resultUrl });
+      await adapters.audit.log("results_uploaded", userId, orderId, { resultUrl: objectPath });
 
       res.json(updated);
     } catch (error: any) {
+      console.error("Error uploading diagnostic result:", error);
       res.status(400).json({ error: error.message });
     }
+  });
+
+  // Object storage routes
+  app.get("/objects/:objectPath(*)", async (req, res) => {
+    const { ObjectStorageService, ObjectNotFoundError } = await import("./objectStorage");
+    const { ObjectPermission } = await import("./objectAcl");
+    const { userId } = req.query as { userId?: string };
+    
+    const objectStorageService = new ObjectStorageService();
+    try {
+      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      const canAccess = await objectStorageService.canAccessObjectEntity({
+        objectFile,
+        userId: userId,
+        requestedPermission: ObjectPermission.READ,
+      });
+      if (!canAccess) {
+        return res.sendStatus(401);
+      }
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error checking object access:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.sendStatus(404);
+      }
+      return res.sendStatus(500);
+    }
+  });
+
+  app.post("/api/objects/upload", async (req, res) => {
+    const { ObjectStorageService } = await import("./objectStorage");
+    const objectStorageService = new ObjectStorageService();
+    const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+    res.json({ uploadURL });
   });
 
   // Referral routes

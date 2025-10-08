@@ -1,9 +1,13 @@
 import { db } from "./db";
 import { users, consults, prescriptions, diagnosticsOrders } from "@shared/schema";
 import type { PrescriptionItem } from "@shared/schema";
+import { makeAdapters } from "./adapters";
+import { REGISTRY } from "@shared/config";
 
 async function seed() {
   console.log("🌱 Seeding database...");
+
+  const adapters = makeAdapters(REGISTRY);
 
   // Create users
   const [patient] = await db.insert(users).values({
@@ -92,7 +96,7 @@ async function seed() {
     consultId: consult.id,
     status: "active",
     items,
-    qrToken: "QR-ABC123XYZ789",
+    qrToken: await adapters.qr.generateQrToken(consult.id),
     qrDisabled: 0,
     pdfDownloaded: 0
   }).returning();

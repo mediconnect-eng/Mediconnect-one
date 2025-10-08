@@ -66,7 +66,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
+    const [user] = await db.insert(users).values([insertUser]).returning();
     return user;
   }
 
@@ -100,7 +100,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createConsult(insertConsult: InsertConsult): Promise<Consult> {
-    const [consult] = await db.insert(consults).values(insertConsult).returning();
+    const [consult] = await db.insert(consults).values([insertConsult]).returning();
     return consult;
   }
 
@@ -137,7 +137,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPrescription(insertPrescription: InsertPrescription): Promise<Prescription> {
-    const [prescription] = await db.insert(prescriptions).values(insertPrescription).returning();
+    const [prescription] = await db.insert(prescriptions).values([insertPrescription]).returning();
     return prescription;
   }
 
@@ -174,7 +174,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createReferral(insertReferral: InsertReferral): Promise<Referral> {
-    const [referral] = await db.insert(referrals).values(insertReferral).returning();
+    const [referral] = await db.insert(referrals).values([insertReferral]).returning();
     return referral;
   }
 
@@ -196,7 +196,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createDiagnosticsOrder(insertOrder: InsertDiagnosticsOrder): Promise<DiagnosticsOrder> {
-    const [order] = await db.insert(diagnosticsOrders).values(insertOrder).returning();
+    const [order] = await db.insert(diagnosticsOrders).values([insertOrder]).returning();
     return order;
   }
 

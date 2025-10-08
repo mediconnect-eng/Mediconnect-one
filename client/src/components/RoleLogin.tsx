@@ -60,7 +60,7 @@ export function RoleLogin({ role, onLogin }: RoleLoginProps) {
               <p className="font-medium text-sm">WhatsApp OTP Coming Soon</p>
             </div>
             <p className="text-xs text-accent-foreground/80">
-              For now, enter your email and WhatsApp number to access the demo
+              For now, enter your email and WhatsApp number to access the prototype
             </p>
           </div>
         )}
@@ -110,7 +110,7 @@ export function RoleLogin({ role, onLogin }: RoleLoginProps) {
         </form>
 
         <p className="text-xs text-center text-muted-foreground">
-          This is a demo environment. No real authentication is performed.
+          This is a functional prototype. No real authentication is performed.
         </p>
       </Card>
     </div>

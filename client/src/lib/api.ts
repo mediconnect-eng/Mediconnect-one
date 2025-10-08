@@ -46,6 +46,9 @@ export const api = {
     async get(id: string): Promise<Prescription> {
       return apiRequest("GET", `/api/prescriptions/${id}`, undefined);
     },
+    async getQrImage(id: string, userId: string): Promise<{ qrDataUri: string }> {
+      return apiRequest("GET", `/api/prescriptions/${id}/qr-image?userId=${userId}`, undefined);
+    },
     async downloadPdf(id: string): Promise<Prescription> {
       return apiRequest("POST", `/api/prescriptions/${id}/download-pdf`, {});
     }

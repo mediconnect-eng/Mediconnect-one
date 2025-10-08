@@ -1,15 +1,27 @@
 import { QrCode, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+import { getUserFromStorage } from "@/lib/storage";
 
 interface QRPanelProps {
+  prescriptionId?: string;
   qrToken?: string;
   disabledReason?: string;
   className?: string;
 }
 
-export function QRPanel({ qrToken, disabledReason, className }: QRPanelProps) {
+export function QRPanel({ prescriptionId, qrToken, disabledReason, className }: QRPanelProps) {
   const isDisabled = !!disabledReason;
+  const userData = getUserFromStorage();
+  const userId = userData?.id;
+
+  const { data: qrData, isLoading } = useQuery({
+    queryKey: ["/api/prescriptions", prescriptionId, "qr-image"],
+    queryFn: () => api.prescriptions.getQrImage(prescriptionId!, userId!),
+    enabled: !isDisabled && !!prescriptionId && !!qrToken && !!userId,
+  });
 
   return (
     <Card className={cn("p-6", className)}>
@@ -38,17 +50,27 @@ export function QRPanel({ qrToken, disabledReason, className }: QRPanelProps) {
               <QrCode className="h-16 w-16 text-muted-foreground mx-auto opacity-30" />
               <p className="text-sm text-muted-foreground">{disabledReason}</p>
             </div>
-          ) : qrToken ? (
+          ) : qrToken && qrData?.qrDataUri ? (
             <div className="text-center p-4">
               <div className="bg-white p-4 rounded-lg inline-block">
-                <QrCode className="h-32 w-32 text-primary" data-testid="qr-code-active" />
-                <p className="text-xs text-muted-foreground mt-2 font-mono">{qrToken.slice(0, 8)}...</p>
+                <img 
+                  src={qrData.qrDataUri} 
+                  alt="Prescription QR Code" 
+                  className="h-48 w-48"
+                  data-testid="qr-code-image"
+                />
+                <p className="text-xs text-muted-foreground mt-2 font-mono">{qrToken.slice(0, 12)}...</p>
               </div>
+            </div>
+          ) : qrToken && isLoading ? (
+            <div className="text-center p-6">
+              <QrCode className="h-16 w-16 text-muted-foreground mx-auto animate-pulse" />
+              <p className="text-sm text-muted-foreground mt-2">Generating QR code...</p>
             </div>
           ) : (
             <div className="text-center p-6">
               <QrCode className="h-16 w-16 text-muted-foreground mx-auto" />
-              <p className="text-sm text-muted-foreground mt-2">Generating QR code...</p>
+              <p className="text-sm text-muted-foreground mt-2">No QR code available</p>
             </div>
           )}
         </div>

@@ -37,7 +37,7 @@ export default function Terms() {
             <section>
               <h2 className="text-xl font-semibold mb-3">2. Use of Service</h2>
               <p className="text-muted-foreground">
-                Mediconnect provides a platform connecting patients with healthcare providers. This is a demonstration environment and should not be used for actual medical consultations.
+                Mediconnect provides a platform connecting patients with healthcare providers. This is a functional prototype and should not be used for actual medical consultations.
               </p>
             </section>
 
@@ -51,7 +51,7 @@ export default function Terms() {
             <section>
               <h2 className="text-xl font-semibold mb-3">4. Medical Disclaimer</h2>
               <p className="text-muted-foreground">
-                This platform is for demonstration purposes only. Always consult with qualified healthcare professionals for medical advice, diagnosis, or treatment.
+                This platform is a functional prototype only. Always consult with qualified healthcare professionals for medical advice, diagnosis, or treatment.
               </p>
             </section>
 

@@ -54,7 +54,7 @@ export default function Profile() {
             <div className="grid md:grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-muted-foreground">Name</p>
-                <p className="font-medium text-foreground">Demo Patient</p>
+                <p className="font-medium text-foreground">Test Patient</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Phone</p>
