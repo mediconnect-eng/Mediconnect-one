@@ -7,7 +7,7 @@ import type { UserRole } from "@shared/schema";
 
 interface RoleLoginProps {
   role: UserRole;
-  onLogin: (identifier: string) => void;
+  onLogin: (identifier: string) => void | Promise<void>;
 }
 
 const roleConfig: Record<UserRole, { title: string; placeholder: string; subtitle: string }> = {
@@ -42,10 +42,10 @@ export function RoleLogin({ role, onLogin }: RoleLoginProps) {
   const [identifier, setIdentifier] = useState("");
   const config = roleConfig[role];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (identifier.trim()) {
-      onLogin(identifier.trim());
+      await onLogin(identifier.trim());
     }
   };
 

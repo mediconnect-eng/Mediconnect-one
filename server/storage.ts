@@ -67,7 +67,7 @@ export class MemStorage implements IStorage {
     this.users.set(patientId, {
       id: patientId,
       name: "John Doe",
-      phone: "+1234567890",
+      phone: "1234567890",
       email: "patient@demo.com",
       role: "patient",
       metadata: {}

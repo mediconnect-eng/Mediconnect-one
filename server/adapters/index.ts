@@ -3,6 +3,7 @@ import { WhatsAppMessagingStub } from "./messaging.whatsappStub";
 import { QRLocalStub } from "./qr.localStub";
 import { StorageLocalStub } from "./storage.localStub";
 import { AuditStub } from "./audit.stub";
+import { storage } from "../storage";
 import type { REGISTRY } from "@shared/config";
 
 export interface Adapters {
@@ -17,7 +18,7 @@ export function makeAdapters(registry: typeof REGISTRY): Adapters {
   const adapters: any = {};
 
   if (registry.auth === 'auth.whatsappStub') {
-    adapters.auth = new WhatsAppAuthStub();
+    adapters.auth = new WhatsAppAuthStub(storage);
   } else {
     throw new Error(`Unknown auth adapter: ${registry.auth}`);
   }

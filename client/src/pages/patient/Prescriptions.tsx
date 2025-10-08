@@ -5,11 +5,12 @@ import { Card } from "@/components/ui/card";
 import { StatusChip } from "@/components/StatusChip";
 import { ArrowLeft, Pill, ArrowRight, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
+import { getUserFromStorage } from "@/lib/storage";
 
 export default function Prescriptions() {
   const [, setLocation] = useLocation();
 
-  const userData = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("mediconnect_user") || "{}") : {};
+  const userData = getUserFromStorage() || {};
   const patientId = userData.id;
 
   const { data: prescriptions = [], isLoading, error } = useQuery({

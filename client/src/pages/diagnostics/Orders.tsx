@@ -16,13 +16,14 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
+import { getUserFromStorage } from "@/lib/storage";
 
 export default function DiagnosticsOrders() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
 
-  const userData = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("mediconnect_user") || "{}") : {};
+  const userData = getUserFromStorage() || {};
   const userId = userData.id;
   const role = userData.role;
 

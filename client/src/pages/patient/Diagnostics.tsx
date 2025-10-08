@@ -6,12 +6,13 @@ import { StatusChip } from "@/components/StatusChip";
 import { ArrowLeft, Microscope, Download, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+import { getUserFromStorage } from "@/lib/storage";
 
 export default function Diagnostics() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const userData = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("mediconnect_user") || "{}") : {};
+  const userData = getUserFromStorage() || {};
   const userId = userData.id;
   const role = userData.role;
 

@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Send, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { getUserFromStorage } from "@/lib/storage";
 
 export default function Intake() {
   const [, setLocation] = useLocation();
@@ -22,7 +23,7 @@ export default function Intake() {
     allergies: ""
   });
 
-  const userData = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("mediconnect_user") || "{}") : {};
+  const userData = getUserFromStorage() || {};
   const patientId = userData.id;
 
   const submitIntakeMutation = useMutation({

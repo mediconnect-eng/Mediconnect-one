@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/lib/api";
+import { getUserFromStorage } from "@/lib/storage";
 
 const tabs: Tab[] = [
   { id: "requested", label: "Requested", href: "/specialist", icon: <Inbox className="h-5 w-5" /> },
@@ -27,7 +28,7 @@ const tabs: Tab[] = [
 export default function SpecialistPortal() {
   const [, setLocation] = useLocation();
 
-  const userData = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("mediconnect_user") || "{}") : {};
+  const userData = getUserFromStorage() || {};
   const userId = userData.id;
   const role = userData.role;
 

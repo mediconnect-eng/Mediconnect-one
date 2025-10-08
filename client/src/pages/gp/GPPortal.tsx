@@ -16,6 +16,7 @@ import {
   Loader2
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { getUserFromStorage } from "@/lib/storage";
 
 const tabs: Tab[] = [
   { id: "live", label: "Live Requests", href: "/gp", icon: <Inbox className="h-5 w-5" /> },
@@ -45,7 +46,7 @@ const mockMessages = [
 export default function GPPortal() {
   const [, setLocation] = useLocation();
 
-  const userData = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("mediconnect_user") || "{}") : {};
+  const userData = getUserFromStorage() || {};
   const userId = userData.id;
   const role = userData.role;
 
