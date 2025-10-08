@@ -5,8 +5,8 @@ import { api } from "@/lib/api";
 export default function DiagnosticsLogin() {
   const [, setLocation] = useLocation();
 
-  const handleLogin = async (identifier: string) => {
-    const { user } = await api.auth.mockLogin(identifier, "diagnostics");
+  const handleLogin = async (email: string, phone: string) => {
+    const { user } = await api.auth.mockLogin(email, phone, "diagnostics");
     localStorage.setItem("mediconnect_user", JSON.stringify(user));
     setLocation("/diagnostics/orders");
   };

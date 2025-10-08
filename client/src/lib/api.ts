@@ -13,8 +13,8 @@ import type {
 
 export const api = {
   auth: {
-    async mockLogin(identifier: string, role: UserRole): Promise<{ user: User }> {
-      return apiRequest("POST", "/api/auth/mock-login", { identifier, role });
+    async mockLogin(email: string, phone: string, role: UserRole): Promise<{ user: User }> {
+      return apiRequest("POST", "/api/auth/mock-login", { email, phone, role });
     },
     async requestOtp(phone: string) {
       return apiRequest("POST", "/api/auth/request-otp", { phone });

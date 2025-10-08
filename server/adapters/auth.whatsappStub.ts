@@ -30,23 +30,30 @@ export class WhatsAppAuthStub implements AuthPort {
     };
   }
 
-  async mockLogin(identifier: string, role: UserRole): Promise<User> {
-    console.log(`[WhatsAppStub] Mock login: ${identifier} as ${role}`);
+  async mockLogin(email: string, phone: string, role: UserRole): Promise<User> {
+    console.log(`[WhatsAppStub] Mock login: ${email} (${phone}) as ${role}`);
     
-    // Try to find existing user by phone first
-    const existingUserByPhone = await this.storage.getUserByPhone(identifier);
-    if (existingUserByPhone) {
-      console.log(`[WhatsAppStub] Found existing user by phone: ${existingUserByPhone.id}`);
-      return existingUserByPhone;
+    // Try to find existing user by email (primary identifier)
+    const existingUserByEmail = await this.storage.getUserByEmail(email);
+    if (existingUserByEmail) {
+      console.log(`[WhatsAppStub] Found existing user by email: ${existingUserByEmail.id}`);
+      
+      // Update phone if provided and different (optional for existing users)
+      if (phone && existingUserByEmail.phone !== phone) {
+        console.log(`[WhatsAppStub] Updating phone for user: ${existingUserByEmail.id}`);
+        await this.storage.updateUser(existingUserByEmail.id, { phone });
+        return { ...existingUserByEmail, phone };
+      }
+      
+      return existingUserByEmail;
     }
     
-    // If not found and identifier contains @, try to find by email
-    if (identifier.includes('@')) {
-      const existingUserByEmail = await this.storage.getUserByEmail(identifier);
-      if (existingUserByEmail) {
-        console.log(`[WhatsAppStub] Found existing user by email: ${existingUserByEmail.id}`);
-        return existingUserByEmail;
-      }
+    // For new users, both email and phone are required
+    if (!email) {
+      throw new Error("Email is required for new user creation");
+    }
+    if (!phone) {
+      throw new Error("Phone number is required for new user creation");
     }
     
     const roleNames: Record<UserRole, string> = {
@@ -57,11 +64,11 @@ export class WhatsAppAuthStub implements AuthPort {
       diagnostics: "HealthLab Diagnostics"
     };
 
-    console.log(`[WhatsAppStub] Creating new user for ${identifier}`);
+    console.log(`[WhatsAppStub] Creating new user for ${email} with phone ${phone}`);
     const newUser = await this.storage.createUser({
       name: roleNames[role],
-      phone: identifier.includes('@') ? null : identifier,
-      email: identifier.includes('@') ? identifier : null,
+      phone,
+      email,
       role,
       metadata: {}
     });

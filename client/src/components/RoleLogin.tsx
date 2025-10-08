@@ -7,45 +7,41 @@ import type { UserRole } from "@shared/schema";
 
 interface RoleLoginProps {
   role: UserRole;
-  onLogin: (identifier: string) => void | Promise<void>;
+  onLogin: (email: string, phone: string) => void | Promise<void>;
 }
 
-const roleConfig: Record<UserRole, { title: string; placeholder: string; subtitle: string }> = {
+const roleConfig: Record<UserRole, { title: string; subtitle: string }> = {
   patient: {
     title: "Patient Login",
-    placeholder: "Phone number",
     subtitle: "Access your health records and consultations"
   },
   gp: {
     title: "GP Portal",
-    placeholder: "Email or phone",
     subtitle: "Manage patient consultations and referrals"
   },
   specialist: {
     title: "Specialist Portal",
-    placeholder: "Email or phone",
     subtitle: "Review referrals and manage appointments"
   },
   pharmacy: {
     title: "Pharmacy Portal",
-    placeholder: "Email or phone",
     subtitle: "Verify and dispense prescriptions"
   },
   diagnostics: {
     title: "Diagnostics Portal",
-    placeholder: "Email or phone",
     subtitle: "Manage lab orders and results"
   },
 };
 
 export function RoleLogin({ role, onLogin }: RoleLoginProps) {
-  const [identifier, setIdentifier] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const config = roleConfig[role];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (identifier.trim()) {
-      await onLogin(identifier.trim());
+    if (email.trim() && phone.trim()) {
+      await onLogin(email.trim(), phone.trim());
     }
   };
 
@@ -64,24 +60,41 @@ export function RoleLogin({ role, onLogin }: RoleLoginProps) {
               <p className="font-medium text-sm">WhatsApp OTP Coming Soon</p>
             </div>
             <p className="text-xs text-accent-foreground/80">
-              For now, enter any phone number to access the demo
+              For now, enter your email and WhatsApp number to access the demo
             </p>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="identifier" className="text-sm font-medium text-foreground">
-              {config.placeholder}
+            <label htmlFor="email" className="text-sm font-medium text-foreground">
+              Email Address
             </label>
             <Input
-              id="identifier"
-              type="text"
-              placeholder={config.placeholder}
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              data-testid={`input-login-${role}`}
+              id="email"
+              type="email"
+              placeholder="your.email@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              data-testid={`input-email-${role}`}
               className="w-full"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="phone" className="text-sm font-medium text-foreground">
+              WhatsApp Number
+            </label>
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="+1234567890"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              data-testid={`input-phone-${role}`}
+              className="w-full"
+              required
             />
           </div>
 

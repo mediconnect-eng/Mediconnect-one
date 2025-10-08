@@ -22,8 +22,8 @@ export type ReferralStatus = "proposed" | "accepted" | "completed";
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
-  phone: text("phone").unique(),
-  email: text("email"),
+  phone: text("phone"),
+  email: text("email").unique(),
   role: text("role").notNull().$type<UserRole>(),
   metadata: jsonb("metadata"),
 });

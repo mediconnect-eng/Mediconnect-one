@@ -32,8 +32,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/mock-login", async (req, res) => {
     try {
-      const { identifier, role } = req.body;
-      const user = await adapters.auth.mockLogin(identifier, role);
+      const { email, phone, role } = req.body;
+      
+      // Validate email is provided and has valid format
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({ error: "Email is required" });
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: "Invalid email format" });
+      }
+      
+      // Validate phone is provided and has valid format (10+ digits)
+      if (!phone || typeof phone !== 'string') {
+        return res.status(400).json({ error: "Phone number is required" });
+      }
+      const phoneDigits = phone.replace(/\D/g, '');
+      if (phoneDigits.length < 10) {
+        return res.status(400).json({ error: "Phone number must contain at least 10 digits" });
+      }
+      
+      const user = await adapters.auth.mockLogin(email, phone, role);
       await adapters.audit.log("mock_login", user.id, "auth", { role });
       res.json({ user });
     } catch (error: any) {

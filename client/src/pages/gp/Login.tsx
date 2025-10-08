@@ -5,8 +5,8 @@ import { api } from "@/lib/api";
 export default function GPLogin() {
   const [, setLocation] = useLocation();
 
-  const handleLogin = async (identifier: string) => {
-    const { user } = await api.auth.mockLogin(identifier, "gp");
+  const handleLogin = async (email: string, phone: string) => {
+    const { user } = await api.auth.mockLogin(email, phone, "gp");
     localStorage.setItem("mediconnect_user", JSON.stringify(user));
     setLocation("/gp");
   };
