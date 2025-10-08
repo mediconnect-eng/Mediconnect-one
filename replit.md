@@ -54,30 +54,36 @@ Preferred communication style: Simple, everyday language.
 
 ### Data Storage Solutions
 
-**Current Implementation**: In-memory storage (`MemStorage` class in `server/storage.ts`) implementing the `IStorage` interface
+**Current Implementation**: PostgreSQL database with Drizzle ORM (`DatabaseStorage` class in `server/storage.ts`) implementing the `IStorage` interface
 
 **Database Schema** (defined in `shared/schema.ts` using Drizzle ORM):
-- **users**: User accounts with role-based access (patient, gp, specialist, pharmacy, diagnostics)
-- **consults**: Patient consultations with intake data and status tracking
-- **messages**: Consultation messages
-- **prescriptions**: Digital prescriptions with items, QR tokens, and PDF download tracking
-- **referrals**: GP-to-specialist referrals with proposed specialist lists
-- **diagnosticsOrders**: Lab test orders with status tracking
+- **users**: User accounts with role-based access (patient, gp, specialist, pharmacy, diagnostics), email UNIQUE constraint, nullable phone field
+- **consults**: Patient consultations with intake data and status tracking, foreign key to users
+- **messages**: Consultation messages, foreign keys to consults and users
+- **prescriptions**: Digital prescriptions with items, QR tokens, and PDF download tracking, foreign keys to consults and users
+- **referrals**: GP-to-specialist referrals with proposed specialist lists, foreign keys to users
+- **diagnosticsOrders**: Lab test orders with status tracking, foreign keys to users
 
-**Planned Migration**: PostgreSQL via Drizzle ORM (configuration in `drizzle.config.ts` with Neon serverless driver)
+**Database Configuration**: PostgreSQL via Drizzle ORM with Neon serverless driver (configured in `drizzle.config.ts`)
 
-**Design Decision**: The in-memory storage provides a drop-in replacement pattern, allowing seamless transition to a real database by implementing the same `IStorage` interface
+**Design Decision**: The DatabaseStorage implements the same `IStorage` interface pattern, providing type-safe database queries with proper foreign key constraints and referential integrity
 
 ### Authentication and Authorization
 
-**Current Approach**: Mock authentication system with stub OTP verification
+**Current Approach**: Email-based authentication with mandatory WhatsApp number
 
 **Authentication Flow**:
-1. Phone-based OTP request (currently accepts any code)
-2. Mock login by identifier and role for development
-3. Session-based authentication (credentials included in fetch requests)
+1. Email + WhatsApp number input (both required for new users)
+2. Mock login finds existing users by email (primary identifier)
+3. Phone number updated if different from stored value
+4. Backend validation ensures proper email format and 10+ digit phone
+5. Session-based authentication (credentials included in fetch requests)
 
 **Authorization**: Role-based access control with five distinct user roles, each with dedicated portal routes
+
+**Database Constraints**:
+- Email: UNIQUE constraint (primary identifier)
+- Phone: Nullable (no UNIQUE constraint to avoid null collision issues)
 
 **Future Integration**: WhatsApp Business API for production OTP delivery (adapter pattern allows easy swap)
 
@@ -125,10 +131,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (October 2025)
 
-### Completed MVP Features
+### Completed Features (Latest)
+- ✅ **PostgreSQL Database Migration**: Replaced in-memory storage with DatabaseStorage using Drizzle ORM, added foreign key constraints and relations, migrated all seed data to persistent database
+- ✅ **Email Authentication with Mandatory WhatsApp**: Implemented email as primary identifier with required WhatsApp number, backend validation (email format + 10+ digit phone), UNIQUE constraint on email
 - ✅ Complete schema-first architecture with TypeScript interfaces and domain contracts
 - ✅ All five role-based portals (Patient, GP, Specialist, Pharmacy, Diagnostics) with full UI
-- ✅ Backend API with Express routes, in-memory storage, and stub adapters
+- ✅ Backend API with Express routes, PostgreSQL storage, and stub adapters
 - ✅ Frontend-backend integration with React Query (no mock data)
 - ✅ Digital prescription PDF generation with PDFKit
 - ✅ QR-disable policy: PDF download disables QR code via adapter
@@ -137,28 +145,32 @@ Preferred communication style: Simple, everyday language.
 - ✅ All critical bugs fixed (React hooks, nested anchors, JSON parsing, auth flow)
 
 ### Core User Journeys (Verified)
-1. **Patient Flow**: Login → View prescriptions → Download PDF (QR disabled)
-2. **Pharmacy Flow**: Login → Scan QR → View items only (no PII) → Reject disabled QR
-3. **GP Flow**: Login → View consultations → Manage patient care
-4. **Specialist Flow**: Login → View referrals → Manage appointments
-5. **Diagnostics Flow**: Login → View lab orders → Upload results
+1. **Patient Flow**: Login with email+phone → View prescriptions → Download PDF (QR disabled)
+2. **Pharmacy Flow**: Login with email+phone → Scan QR → View items only (no PII) → Reject disabled QR
+3. **GP Flow**: Login with email+phone → View consultations → Manage patient care
+4. **Specialist Flow**: Login with email+phone → View referrals → Manage appointments
+5. **Diagnostics Flow**: Login with email+phone → View lab orders → Upload results
 
 ### Technical Implementation
-- **Auth Flow**: Mock login finds existing users by phone (prevents duplicates)
+- **Database**: PostgreSQL with Drizzle ORM, foreign key constraints, seed script with test credentials
+- **Auth Flow**: Email + WhatsApp number input, backend validation (400 errors for invalid inputs), email as primary identifier
 - **PDF Generation**: Real PDFKit PDFs with prescription details and disabled status
 - **Storage Helper**: Safe `getUserFromStorage()` with try-catch error handling
 - **Adapter Swappability**: Config-driven registry enables production integrations
-- **Seed Data**: In-memory storage with test patient (phone: 1234567890), prescription (QR: QR-ABC123XYZ789)
+- **Seed Data**: PostgreSQL database with test patient (email: patient@demo.com, phone: 1234567890), prescription (QR: QR-ABC123XYZ789)
 
-### Known Limitations (MVP v0)
-- In-memory storage resets on server restart (planned: PostgreSQL migration)
+### Known Limitations (MVP v1)
 - Stub adapters for all external services (planned: real WhatsApp, payment, mapping APIs)
-- UUIDs regenerate on each seed (affects test consistency but not production use)
+- Local QR token generation (planned: secure cloud-based QR service)
+- Mock file storage (planned: S3/GCS integration)
 
 ### Next Steps for Production
-1. Migrate to PostgreSQL database with Drizzle ORM
-2. Implement real WhatsApp Business API integration
-3. Add payment gateway integration (Stripe/Razorpay)
-4. Implement real QR code generation and storage service
-5. Add comprehensive error monitoring and logging
-6. Set up automated backups and disaster recovery
+1. ✅ ~~Migrate to PostgreSQL database with Drizzle ORM~~ (COMPLETED)
+2. ✅ ~~Email authentication with WhatsApp number~~ (COMPLETED)
+3. Implement cloud storage for diagnostic results and prescription PDFs (S3/GCS)
+4. Implement secure QR code generation service (QR Code Monkey/GoQR)
+5. Add video consultation feature (Twilio Video/Daily.co)
+6. Implement real WhatsApp Business API integration
+7. Add payment gateway integration (Stripe/Razorpay)
+8. Add comprehensive error monitoring and logging
+9. Set up automated backups and disaster recovery
