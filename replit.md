@@ -137,6 +137,11 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes (October 2025)
 
 ### Completed Features (Latest)
+- ✅ **Patient Portal Complete Redesign (October 2025)**: Implemented all patient screens based on PDF designs with purple/indigo theme:
+  - **Core Screens**: Care home (AI assistant card, quick access icons, nearby pharmacies, educational videos), Profile (user info, menu sections, support, legal, enhanced sign out modal), Diagnostics (test order cards with progress dots, status badges, file upload), Pharmacy (active prescription card, map view, pharmacy list, prescription history tabs), Specialists (upcoming appointments with Dr. Sarah Johnson, past visits, cancel modal)
+  - **Supporting Pages**: Splash loading screen with M logo and auto-redirect, Terms & Consent page with checkboxes and accept flow, Visit Summary with doctor info/vitals/diagnosis/treatment plan/prescriptions/lab results, Notification Preferences with WhatsApp toggles, Support page with WhatsApp chat and hours info
+  - **Reusable Components**: PatientShell (56px header + 64px bottom nav), StatusBadge (5 variants), ProgressDots, ActionButton, FamilySwitcher, Request Sample Pickup modal
+  - **Design System**: Purple primary (#5B51E8 HSL 245 80% 60%), semantic colors (emergency red, success green, warning amber, info blue), Material Design 3 foundation, updated design_guidelines.md
 - ✅ **Replit Object Storage Integration**: Implemented cloud file storage for diagnostic results and prescription PDFs using Replit Object Storage, ACL policies for private/public access control, presigned upload URLs, server-side PDF uploads, and secure authenticated downloads
 - ✅ **Secure QR Code System**: Replaced stub with real 'qrcode' library using crypto.randomBytes for cryptographically secure tokens, on-demand PNG generation with high error correction, secured endpoint with authentication/authorization, audit logging for QR access
 - ✅ **Professional Homepage**: Created hero landing page with Mediconnect branding, three grouped login options (Patient/Doctor/Partner), Material Design 3 styling, responsive layout, SEO/Open Graph tags, replaced all "demo" references with "functional prototype"
