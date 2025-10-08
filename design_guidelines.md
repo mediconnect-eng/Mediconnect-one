@@ -1,9 +1,9 @@
 # Mediconnect Design Guidelines
 
-## Design Approach: Healthcare-Optimized Design System
+## Design Approach: Modern Healthcare Design System
 
-**Selected Approach**: Material Design 3 foundation with healthcare-specific adaptations
-**Rationale**: Healthcare applications demand trust, clarity, and accessibility. Material Design provides robust patterns for data-dense interfaces while maintaining visual polish for patient-facing experiences.
+**Selected Approach**: Material Design 3 foundation with healthcare-specific adaptations and modern color palette
+**Rationale**: Healthcare applications demand trust, clarity, and accessibility. The updated design uses purple/indigo as the primary color for a modern, accessible interface while maintaining visual polish for patient-facing experiences.
 
 ## Core Design Principles
 
@@ -15,27 +15,42 @@
 ## Color Palette
 
 ### Light Mode
-- **Primary Brand**: 210 85% 45% (Medical Blue - trust, professionalism)
-- **Primary Variant**: 210 75% 35% (Deeper blue for emphasis)
-- **Secondary/Accent**: 150 60% 45% (Healthcare Green - health, vitality)
-- **Background**: 210 20% 98% (Soft clinical white)
-- **Surface**: 0 0% 100% (Pure white for cards/containers)
-- **Error**: 0 70% 50% (Medical red - alerts, critical info)
-- **Warning**: 40 95% 50% (Amber - caution states)
-- **Success**: 150 65% 45% (Consistent with accent green)
+- **Primary (Purple/Indigo)**: 245 80% 60% (#5B51E8) - main actions, active states, primary buttons
+- **Emergency/Danger (Red)**: 0 72% 51% (#DC2626) - emergency button, sign out, critical alerts
+- **Success (Green)**: 160 84% 39% (#10B981) - "Ready", "Completed", "Paid" status badges
+- **Warning (Amber)**: 38 92% 50% (#F59E0B) - "Pending" status, caution states
+- **Info (Light Blue)**: 200 95% 45% - informational badges and notifications
+- **Background Primary**: 0 0% 100% (White) - main background
+- **Background Secondary**: 220 14% 98% (#F9FAFB) - section backgrounds, subtle contrast
+- **Card**: 0 0% 100% (White) - card backgrounds with subtle shadow
+- **Border**: 220 13% 91% (#E5E7EB) - default borders, dividers
+- **Text Primary**: 220 13% 18% - main content text
+- **Text Secondary**: 220 9% 46% - supporting text, metadata
+- **Text Tertiary**: 220 9% 64% - least important text, placeholders
 
 ### Dark Mode
-- **Primary Brand**: 210 80% 60% (Lighter blue for contrast)
-- **Background**: 210 15% 12% (Deep blue-tinted dark)
-- **Surface**: 210 12% 16% (Elevated surface tone)
-- **Text Primary**: 210 5% 95%
-- **Text Secondary**: 210 5% 70%
+- **Primary (Purple/Indigo)**: 245 75% 65% - lighter for better contrast on dark backgrounds
+- **Emergency/Danger (Red)**: 0 68% 55% - adjusted for dark mode visibility
+- **Success (Green)**: 160 80% 45% - adjusted for dark mode
+- **Warning (Amber)**: 38 88% 55% - adjusted for dark mode
+- **Info (Light Blue)**: 200 90% 50%
+- **Background Primary**: 220 18% 12% - deep dark with slight blue tint
+- **Background Secondary**: 220 15% 16% - slightly elevated dark surface
+- **Card**: 220 15% 18% - elevated card surface
+- **Border**: 220 12% 24% - borders in dark mode
+- **Text Primary**: 220 5% 95% - light text
+- **Text Secondary**: 220 5% 70% - muted light text
+- **Text Tertiary**: 220 5% 50% - very muted text
 
-### Semantic Colors
-- **Prescription Status**: 260 60% 55% (Purple - pharmacy)
-- **Diagnostics Status**: 190 70% 50% (Cyan - lab work)
-- **Consult Active**: 25 90% 55% (Orange - urgent attention)
-- **Completed/Archived**: 210 10% 60% (Neutral gray)
+### Status Colors (Semantic)
+- **Ready/Active**: Green (160 84% 39%) - available, ready states
+- **Pending**: Amber (38 92% 50%) - waiting, in-progress states
+- **Completed**: Green (160 84% 39%) with checkmark icon
+- **Expired/Cancelled**: Red (0 72% 51%) or Gray (220 9% 46%)
+- **Paid**: Green (160 84% 39%) - successful payment
+- **Prescription**: Purple (260 60% 55%) - pharmacy-related
+- **Diagnostics**: Cyan (190 70% 50%) - lab work, tests
+- **Consult Active**: Orange (25 90% 55%) - urgent attention needed
 
 ## Typography
 
@@ -44,124 +59,183 @@
 - **Headings**: Inter (same family, weight variation for hierarchy)
 - **Monospace (Data/IDs)**: JetBrains Mono (patient IDs, reference numbers)
 
-### Type Scale
-- **Display (Hero)**: text-5xl md:text-6xl, font-bold (Patient-facing headlines)
-- **H1 (Page Titles)**: text-3xl md:text-4xl, font-semibold
-- **H2 (Section Headers)**: text-2xl md:text-3xl, font-semibold
-- **H3 (Card Titles)**: text-xl font-medium
-- **Body Large**: text-base md:text-lg (Patient instructions, important info)
-- **Body**: text-sm md:text-base (Default interface text)
-- **Caption**: text-xs md:text-sm (Metadata, timestamps)
-- **Label (Form/Buttons)**: text-sm font-medium, uppercase tracking-wide
+### Type Scale & Weights
+- **Display (Hero)**: text-5xl md:text-6xl, font-bold (700)
+- **H1 (Page Titles)**: text-3xl md:text-4xl, font-semibold (600)
+- **H2 (Section Headers)**: text-2xl md:text-3xl, font-semibold (600)
+- **H3 (Card Titles)**: text-xl font-semibold (600)
+- **Body Large**: text-base md:text-lg, font-normal (400)
+- **Body**: text-sm md:text-base, font-normal (400)
+- **Small/Metadata**: text-sm (14px), font-normal (400), text-secondary color
+- **Caption**: text-xs, font-normal (400)
+- **Label (Form/Buttons)**: text-sm font-medium (500)
+
+## Spacing System
+
+### Core Units
+- **Container padding**: 16px (mobile - p-4), 24px (desktop - p-6)
+- **Card padding**: 16px (p-4)
+- **Section gaps**: 24px (gap-6)
+- **Element gaps**: 12px (gap-3), 8px tight (gap-2)
+- **Micro spacing**: 4px (gap-1) for very tight elements
+
+### Spacing Scale
+- **xs**: 4px (space-1)
+- **sm**: 8px (space-2)
+- **md**: 12px (space-3)
+- **lg**: 16px (space-4)
+- **xl**: 24px (space-6)
+- **2xl**: 32px (space-8)
 
 ## Layout System
-
-### Spacing Primitives
-**Core Units**: 4, 8, 12, 16, 24, 32 (e.g., p-4, gap-8, mt-12, py-16, mb-24, pt-32)
-- Micro spacing: 4-8 (component internal)
-- Standard spacing: 12-16 (between related elements)
-- Section spacing: 24-32 (major content separation)
 
 ### Grid & Containers
 - **Max Width**: max-w-7xl (1280px) for main content
 - **Portal Layouts**: max-w-6xl (professional interfaces)
 - **Reading Content**: max-w-3xl (patient instructions, legal text)
-- **Grid Patterns**: grid-cols-1 md:grid-cols-2 lg:grid-cols-3 (feature cards, prescription items)
+- **Grid Patterns**: grid-cols-1 md:grid-cols-2 lg:grid-cols-3
+
+### Layout Structure
+- **Top Bar**: Fixed height ~56px (h-14), logo left, emergency + notification right
+- **Bottom Tab Bar**: Fixed height ~64px (h-16), 5 evenly spaced tabs
+- **Content Area**: Scrollable between top and bottom bars, overflow-y-auto
 
 ### Responsive Breakpoints
-- Mobile: base (< 768px) - single column, bottom nav
-- Tablet: md (768px+) - 2-column layouts, side nav optional
-- Desktop: lg (1024px+) - full multi-column, persistent side navigation
+- **Mobile**: base (< 768px) - single column, bottom nav
+- **Tablet**: md (768px+) - 2-column layouts, side nav optional
+- **Desktop**: lg (1024px+) - full multi-column, persistent side navigation
 
-## Component Library
+## Component Patterns
+
+### Status Badges
+- **Shape**: Rounded pill (rounded-full)
+- **Padding**: px-3 py-1
+- **Typography**: text-xs font-medium
+- **Variants**:
+  - **Ready/Active**: Green background (bg-green-100), green text (text-green-700)
+  - **Pending**: Amber background (bg-amber-100), amber text (text-amber-700)
+  - **Completed**: Green background with checkmark icon
+  - **Expired/Cancelled**: Red/gray background
+  - **Paid**: Green background (bg-green-100), green text (text-green-700)
+
+### Cards
+- **Background**: White (bg-card)
+- **Border Radius**: 12px (rounded-xl)
+- **Padding**: 16px (p-4)
+- **Shadow**: Subtle (shadow-sm)
+- **Clickable Cards**: 
+  - Hover state with slight elevation (hover:shadow-md)
+  - Transition (transition-shadow duration-200)
+- **Action Cards**:
+  - Include icon (left)
+  - Title (font-semibold)
+  - Description (text-sm text-secondary)
+  - Arrow/chevron (right)
+
+### Progress Dots
+- **Layout**: Horizontal flex (flex gap-2)
+- **Dots**: Circular (w-2 h-2 rounded-full)
+- **Completed**: Filled with primary color (bg-primary)
+- **Pending**: Outlined (border-2 border-primary bg-transparent)
 
 ### Navigation
-- **Patient App**: Bottom tab navigation (mobile), top nav bar (desktop) with AI assistant quick access
-- **Partner Portals**: Side navigation (desktop), collapsible hamburger (mobile) with role indicator badge
-- **Tab Navigation**: Underline active state with smooth slide animation, primary color accent
 
-### Cards & Surfaces
-- **Prescription Cards**: Elevated (shadow-md), rounded-lg, p-6, white background with status chip top-right
-- **Consult Cards**: Border-l-4 accent (status-dependent color), bg-surface, p-5
-- **Dashboard Stats**: Grid cards with large numbers (text-4xl), icon (text-primary), label below
-- **QR Panel**: Centered square container (max-w-sm), border-2 border-dashed when disabled, solid when active
+#### Bottom Navigation (Mobile)
+- **Items**: 5 evenly spaced tabs
+- **Layout**: Fixed bottom, flex justify-around
+- **Active State**: Purple icon + text (text-primary)
+- **Inactive State**: Gray icon + text (text-muted-foreground)
+- **Icon + Label**: Vertical stack, icon above label
+- **Height**: 64px (h-16)
+
+#### Top Bar
+- **Height**: 56px (h-14)
+- **Layout**: Flex justify-between
+- **Left**: Logo/brand
+- **Right**: Emergency button + notifications
+
+#### Partner Portals
+- **Side Navigation**: Desktop persistent, mobile collapsible
+- **Tab Navigation**: Underline active state, primary color accent
+
+### Buttons
+
+#### Primary Button
+- **Background**: Purple (bg-primary)
+- **Text**: White (text-primary-foreground)
+- **Width**: Full width on mobile (w-full md:w-auto)
+- **Padding**: px-6 py-3
+- **Border Radius**: rounded-md
+- **Font**: font-medium
+
+#### Secondary Button
+- **Background**: White/transparent (bg-transparent)
+- **Border**: 2px border-primary
+- **Text**: Purple (text-primary)
+- **Padding**: px-6 py-3
+
+#### Emergency Button
+- **Background**: Red (bg-destructive)
+- **Text**: White (text-destructive-foreground)
+- **Icon**: Alert or phone icon
+- **Position**: Top-right in header
 
 ### Forms & Inputs
 - **Text Fields**: Outlined style, focus:ring-2 ring-primary, rounded-md, p-3
-- **Buttons Primary**: bg-primary text-white, px-6 py-3, rounded-md, font-medium, shadow-sm hover:shadow-md
-- **Buttons Secondary**: border-2 border-primary text-primary, bg-transparent
-- **Buttons on Images**: backdrop-blur-md bg-white/20 border-2 border-white text-white (no hover changes needed)
+- **Labels**: text-sm font-medium, mb-1
+- **Helper Text**: text-xs text-muted-foreground
+- **Error State**: border-destructive, text-destructive
 
 ### Data Display
-- **Tables (Professional Portals)**: Striped rows (bg-surface alternate), sticky header, min 3 columns visible mobile
-- **Status Chips**: Rounded-full px-3 py-1 text-xs font-medium with semantic bg colors (awaiting: amber, ready: green, completed: gray)
-- **Timeline (Consult History)**: Vertical line (border-l-2) with circular nodes, timestamps right-aligned
-- **Item Lists (Pharmacy)**: Large touch targets (min-h-16), drug name bold, dosage/instructions text-sm text-secondary
+- **Tables**: Striped rows, sticky header, min 3 columns visible on mobile
+- **Timeline**: Vertical line (border-l-2) with circular nodes
+- **Item Lists**: Large touch targets (min-h-16), primary text bold, secondary text-sm
 
 ### Overlays & Modals
-- **Coming Soon**: Centered card with icon, heading, description, email capture form, backdrop-blur-sm
-- **QR Scanner Modal**: Full-screen overlay (bg-black/90), camera viewport centered, torch toggle bottom
-- **Confirmation Dialogs**: max-w-md, centered, shadow-2xl, critical actions use error color
+- **Modal**: Centered, max-w-md, shadow-2xl, rounded-xl
+- **QR Scanner**: Full-screen overlay, camera viewport centered
+- **Confirmation Dialogs**: Critical actions use destructive color
 
-### Role-Specific UI
+## Role-Specific UI
 
-**Patient Portal**:
-- Friendly, approachable tone with rounded elements (rounded-xl)
+### Patient Portal
+- Friendly, approachable with rounded elements (rounded-xl)
 - Large touch targets (min-h-14 buttons)
-- AI Assistant hero with gradient accent (from-primary to-secondary)
-- Prescription items with medication icons, large readable text
+- Bottom tab navigation (5 items)
+- Purple accent for active states
+- Prescription items with medication icons
 
-**GP/Specialist Portals**:
-- Clinical efficiency focus with dense information display
-- Quick action buttons (floating action pattern for common tasks)
-- Patient cards with medical summary preview
-- WhatsApp join buttons (disabled state with tooltip: "Coming Soon")
+### GP/Specialist Portals
+- Clinical efficiency focus
+- Dense information display
+- Quick action buttons
+- Patient cards with medical summary
 
-**Pharmacy Portal**:
-- QR scanner prominent (hero position)
+### Pharmacy Portal
+- QR scanner prominent
 - Item-only display (NO patient names/details)
-- Large verification feedback (success: green full-screen check, error: red X)
-- Quantity and dosage emphasized (text-2xl font-bold)
+- Large verification feedback
+- Quantity and dosage emphasized
 
-**Diagnostics Portal**:
-- Minimal PII tables (order ID, test type, status only)
-- Upload zone with drag-drop (border-dashed border-2, hover:border-primary)
-- Result preview cards with download action
-
-## Images & Visual Assets
-
-### Hero Images
-- **Patient Home**: Warm, diverse healthcare imagery (doctor-patient interaction, modern clinic), aspect-16/9, gradient overlay
-- **Role Chooser**: Abstract medical iconography or split-screen role representations
-- **Coming Soon Pages**: Soft gradient backgrounds (no images) with floating icon elements
-
-### Icons
-- **Library**: Heroicons (outline for nav/actions, solid for status indicators)
-- **Medical Icons**: Custom set for prescriptions (pill, syringe), diagnostics (microscope, test tube), consultations (stethoscope)
-- **Sizes**: w-5 h-5 (inline), w-8 h-8 (cards), w-16 h-16 (empty states)
-
-## Animations & Interactions
-
-**Minimal Motion Philosophy**: Healthcare contexts require stability over flash
-
-- **Page Transitions**: Simple fade (duration-200)
-- **Status Changes**: Color transition only (transition-colors duration-300)
-- **Loading States**: Subtle pulse on skeleton screens
-- **Tab Switching**: Underline slide (transform-gpu translate-x)
-- **NO**: Complex scroll animations, parallax, particle effects
+### Diagnostics Portal
+- Minimal PII tables
+- Upload zone with drag-drop
+- Result preview cards
 
 ## Accessibility Features
 
-- **Focus Indicators**: ring-2 ring-offset-2 ring-primary on all interactive elements
+- **Focus Indicators**: ring-2 ring-offset-2 ring-primary
 - **Color Contrast**: Minimum 7:1 for clinical data (WCAG AAA)
-- **Touch Targets**: Minimum 44x44px (3rem) for mobile
-- **Screen Reader**: aria-labels on all icons, role="status" for dynamic updates
-- **Keyboard Navigation**: Full tab order, Enter/Space activation, Escape to close modals
+- **Touch Targets**: Minimum 44x44px (11rem) for mobile
+- **Screen Reader**: aria-labels on all icons
+- **Keyboard Navigation**: Full tab order, Enter/Space activation
 
-## Professional Portal Consistency
+## Animations & Interactions
 
-All four partner portals share:
-- Same navigation structure (adapted to role-specific sections)
-- Unified table design with role-specific columns
-- Consistent action button patterns (view, edit, download)
-- Shared empty state illustrations with role-specific messaging
+**Minimal Motion Philosophy**: Healthcare contexts require stability
+
+- **Page Transitions**: Simple fade (duration-200)
+- **Status Changes**: Color transition (transition-colors duration-300)
+- **Hover States**: Slight elevation (hover:shadow-md)
+- **Loading States**: Subtle pulse on skeleton screens
+- **NO**: Complex animations, parallax, particle effects
