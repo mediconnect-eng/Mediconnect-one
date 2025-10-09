@@ -16,6 +16,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByPhone(phone: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  listUsers(role?: UserRole): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User>;
   
@@ -40,6 +41,7 @@ export interface IStorage {
   getReferral(id: string): Promise<Referral | undefined>;
   listReferrals(userId: string, role: UserRole): Promise<Referral[]>;
   createReferral(referral: InsertReferral): Promise<Referral>;
+  updateReferral(id: string, updates: Partial<Referral>): Promise<Referral>;
   
   // Diagnostics
   getDiagnosticsOrder(id: string): Promise<DiagnosticsOrder | undefined>;
@@ -63,6 +65,13 @@ export class DatabaseStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
+  }
+
+  async listUsers(role?: UserRole): Promise<User[]> {
+    if (role) {
+      return db.select().from(users).where(eq(users.role, role));
+    }
+    return db.select().from(users);
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
@@ -176,6 +185,18 @@ export class DatabaseStorage implements IStorage {
   async createReferral(insertReferral: InsertReferral): Promise<Referral> {
     const [referral] = await db.insert(referrals).values([insertReferral]).returning();
     return referral;
+  }
+
+  async updateReferral(id: string, updates: Partial<Referral>): Promise<Referral> {
+    const { createdAt, ...rest } = updates;
+    const [updated] = await db.update(referrals)
+      .set(rest)
+      .where(eq(referrals.id, id))
+      .returning();
+    if (!updated) {
+      throw new Error("Referral not found");
+    }
+    return updated;
   }
 
   // Diagnostics

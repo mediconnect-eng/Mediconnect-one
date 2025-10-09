@@ -63,6 +63,7 @@ export default function PatientSignup() {
         phone: data.phone,
         dateOfBirth: data.dateOfBirth || undefined,
         gender: data.gender || undefined,
+        agreeToTerms: data.agreeToTerms,
       });
 
       localStorage.setItem("mediconnect_user", JSON.stringify(user));

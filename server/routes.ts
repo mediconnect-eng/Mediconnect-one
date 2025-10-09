@@ -1,14 +1,17 @@
 import type { Express } from "express";
-import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { makeAdapters } from "./adapters";
 import { REGISTRY } from "@shared/config";
-import type { PharmacyView, IntakeFormData } from "@shared/schema";
+import type { PharmacyView, IntakeFormData, PrescriptionItem, UserRole } from "@shared/schema";
 import PDFDocument from "pdfkit";
+import { randomUUID } from "crypto";
 
 const adapters = makeAdapters(REGISTRY);
 
-export async function registerRoutes(app: Express): Promise<Server> {
+const normalizePhoneDigits = (value?: string): string =>
+  (value ?? "").replace(/\D/g, "");
+
+export function registerRoutes(app: Express): void {
   // Auth routes
   app.post("/api/auth/request-otp", async (req, res) => {
     try {
@@ -101,7 +104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!phone || typeof phone !== 'string') {
         return res.status(400).json({ error: "Phone number is required" });
       }
-      const phoneDigits = phone.replace(/\D/g, '');
+      const phoneDigits = normalizePhoneDigits(phone);
       if (phoneDigits.length < 10) {
         return res.status(400).json({ error: "Phone number must contain at least 10 digits" });
       }
@@ -113,7 +116,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Verify phone matches
-      if (user.phone !== phone) {
+      const storedPhoneDigits = normalizePhoneDigits(user.phone);
+      if (!storedPhoneDigits || storedPhoneDigits !== phoneDigits) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
       
@@ -160,6 +164,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/consults/:id/accept", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { gpId } = req.body as { gpId?: string };
+
+      if (!gpId) {
+        return res.status(400).json({ error: "gpId is required" });
+      }
+
+      const consult = await storage.getConsult(id);
+      if (!consult) {
+        return res.status(404).json({ error: "Consult not found" });
+      }
+
+      if (consult.status === "completed") {
+        return res.status(400).json({ error: "Consult already completed" });
+      }
+
+      const updated = await storage.updateConsult(id, {
+        status: "in_progress",
+        gpId,
+      });
+
+      await adapters.audit.log("consult_accepted", gpId, id, { status: "in_progress" });
+      await adapters.messaging.notify("consult_accepted", { consultId: id, gpId });
+
+      res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
   app.get("/api/consults", async (req, res) => {
     try {
       const { role, userId } = req.query as { role: string; userId: string };
@@ -177,6 +213,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Consult not found" });
       }
       res.json(consult);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/users", async (req, res) => {
+    try {
+      const { role } = req.query as { role?: string };
+      if (role && !["patient", "gp", "specialist", "pharmacy", "diagnostics"].includes(role)) {
+        return res.status(400).json({ error: "Invalid role" });
+      }
+
+      const users = await storage.listUsers(role as UserRole | undefined);
+      res.json(users);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/consults/:id/prescriptions", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { gpId, items } = req.body as { gpId?: string; items?: PrescriptionItem[] };
+
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ error: "At least one prescription item is required" });
+      }
+
+      const consult = await storage.getConsult(id);
+      if (!consult) {
+        return res.status(404).json({ error: "Consult not found" });
+      }
+
+      const preparedItems = items.map((item) => ({
+        ...item,
+        id: item.id ?? randomUUID(),
+      }));
+
+      const qrToken = await adapters.qr.generateQrToken(id);
+
+      const prescription = await storage.createPrescription({
+        patientId: consult.patientId,
+        consultId: consult.id,
+        status: "active",
+        items: preparedItems as any,
+        qrToken,
+        qrDisabled: 0,
+        pdfDownloaded: 0,
+      });
+
+      await storage.updateConsult(id, { status: "completed" });
+
+      await adapters.audit.log("prescription_created", gpId ?? "system", prescription.id, {
+        consultId: id,
+        itemsCount: items.length,
+      });
+      await adapters.messaging.notify("prescription_created", { consultId: id, prescriptionId: prescription.id });
+
+      res.json(prescription);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
@@ -521,6 +616,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/referrals/:id/status", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status, actorId } = req.body as { status?: string; actorId?: string };
+
+      const allowedStatuses = ["proposed", "accepted", "completed"];
+      if (!status || !allowedStatuses.includes(status)) {
+        return res.status(400).json({ error: "Invalid status" });
+      }
+
+      const updated = await storage.updateReferral(id, { status: status as any });
+      await adapters.audit.log("referral_status_updated", actorId ?? "system", id, { status });
+      await adapters.messaging.notify("referral_status_updated", { referralId: id, status });
+
+      res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
   // Messages routes
   app.get("/api/consults/:consultId/messages", async (req, res) => {
     try {
@@ -547,7 +662,4 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({ error: error.message });
     }
   });
-
-  const httpServer = createServer(app);
-  return httpServer;
 }
