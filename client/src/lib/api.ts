@@ -8,7 +8,8 @@ import type {
   Message,
   PharmacyView,
   IntakeFormData,
-  UserRole
+  UserRole,
+  PrescriptionItem
 } from "@shared/schema";
 
 export type EnrichedDiagnosticsOrder = {
@@ -27,7 +28,7 @@ export type EnrichedDiagnosticsOrder = {
 
 export const api = {
   auth: {
-    async signup(data: { name: string; email: string; phone: string; dateOfBirth?: string; gender?: string }): Promise<{ user: User }> {
+    async signup(data: { name: string; email: string; phone: string; dateOfBirth?: string; gender?: string; agreeToTerms?: boolean }): Promise<{ user: User }> {
       return apiRequest("POST", "/api/auth/signup", data);
     },
     async mockLogin(email: string, phone: string, role: UserRole): Promise<{ user: User }> {
@@ -47,6 +48,12 @@ export const api = {
     },
     async queueConsult(id: string): Promise<Consult> {
       return apiRequest("POST", `/api/consults/${id}/queue`, {});
+    },
+    async accept(id: string, gpId: string): Promise<Consult> {
+      return apiRequest("POST", `/api/consults/${id}/accept`, { gpId });
+    },
+    async createPrescription(id: string, payload: { gpId?: string; items: PrescriptionItem[] }): Promise<Prescription> {
+      return apiRequest("POST", `/api/consults/${id}/prescriptions`, payload);
     },
     async listConsults(role: UserRole, userId: string): Promise<Consult[]> {
       return apiRequest("GET", `/api/consults?role=${role}&userId=${userId}`, undefined);
@@ -92,6 +99,16 @@ export const api = {
     },
     async create(data: { gpId: string; patientId: string; specialistId: string; reason: string; notes?: string }): Promise<Referral> {
       return apiRequest("POST", "/api/referrals", data);
+    },
+    async updateStatus(id: string, status: Referral["status"], actorId?: string): Promise<Referral> {
+      return apiRequest("POST", `/api/referrals/${id}/status`, { status, actorId });
+    }
+  },
+
+  users: {
+    async list(role?: UserRole): Promise<User[]> {
+      const query = role ? `?role=${role}` : "";
+      return apiRequest("GET", `/api/users${query}`, undefined);
     }
   },
 

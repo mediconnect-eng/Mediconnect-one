@@ -1,0 +1,18 @@
+# Core runtime configuration
+# DATABASE_URL is required by Drizzle/Neon client and must point to a Postgres instance.
+DATABASE_URL="postgres://username:password@host:5432/mediconnect"
+
+# Optional: override the port Express listens on (defaults to 5000).
+# PORT="5000"
+
+# Object storage integration (required when enabling PDF downloads or diagnostics uploads).
+# Provide the bucket/path combinations exposed as public search paths, comma-separated.
+# Example: PUBLIC_OBJECT_SEARCH_PATHS="bucket-name/public"
+# PUBLIC_OBJECT_SEARCH_PATHS=""
+
+# Private object directory for uploads (bucket + optional prefix).
+# Example: PRIVATE_OBJECT_DIR="bucket-name/private"
+# PRIVATE_OBJECT_DIR=""
+
+# Flags used by shared/config.ts to toggle adapters can be exported as NODE_ENV vars if needed, e.g.:
+# FLAGS__REAL_QR="true"

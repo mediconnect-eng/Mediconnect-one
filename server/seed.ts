@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { db } from "./db";
 import { users, consults, prescriptions, diagnosticsOrders } from "@shared/schema";
 import type { PrescriptionItem } from "@shared/schema";

@@ -1,0 +1,125 @@
+MediConnect Repository Analysis (Codex Index)
+
+Overview
+- Full-stack TypeScript app for a healthcare MVP combining an Express API with a Vite/React client, a Postgres DB accessed via Drizzle ORM, and pluggable adapters for key services (auth, messaging, QR, storage, audit).
+- Three top-level workspaces: server (API + Vite dev middleware + service adapters), client (React UI using shadcn/ui + Tailwind), shared (types, DB schema, ports, config).
+- Development runs a single Node process that serves both API and front-end (Vite middleware in dev; static files in prod).
+
+Structure
+- client: React app entry and routes, UI components, pages by role (patient, gp, specialist, pharmacy, diagnostics), and shared libs.
+- server: Express app, HTTP routes, persistence/storage, dev/prod serving, adapters, seed and object storage utilities.
+- shared: DB schema + Zod validation, typed ports (hexagonal-style interfaces), feature flags/adapter registry.
+- config/build: Vite, Tailwind, TypeScript config, Drizzle config.
+
+Notable Paths
+- Server entry: server\index.ts
+- Routes and endpoints: server\routes.ts
+- DB access (Drizzle): server\db.ts; schema: shared\schema.ts
+- App adapters: server\adapters\*.ts; adapter wiring: server\adapters\index.ts
+- Object storage integration: server\objectStorage.ts, server\objectAcl.ts
+- Dev/prod web server integration: server\vite.ts
+- Client entry: client\src\main.tsx, client\src\App.tsx
+- Client API wrapper: client\src\lib\api.ts, client\src\lib\queryClient.ts
+- Build config: vite.config.ts, tailwind.config.ts, tsconfig.json, postcss.config.js
+- Drizzle config: drizzle.config.ts
+
+Tech Stack
+- Language/runtime: TypeScript (ESM), Node >= 18
+- Server: Express, Vite dev middleware (HMR), esbuild bundling for production
+- Client: React 18, Vite, wouter (routing), shadcn/ui (Radix primitives), TailwindCSS, TanStack Query
+- Data: Postgres (Neon serverless client), Drizzle ORM + drizzle-kit
+- Validation: Zod + drizzle-zod
+- Messaging/RTC/Assets: socket.io (deps present, not wired in routes yet), QR generation (qrcode), PDF generation (pdfkit), uploads (Uppy in deps), GCS compatible storage via Replit sidecar
+- Auth: Stubbed WhatsApp-based OTP + mock login
+
+Build & Run
+- Scripts (package.json):
+  - dev: NODE_ENV=development tsx server/index.ts
+  - build: vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+  - start: NODE_ENV=production node dist/index.js
+  - check: tsc
+  - db:push: drizzle-kit push
+- Required env:
+  - DATABASE_URL (server/db.ts, drizzle.config.ts) — required at runtime and for migrations.
+  - PORT (optional; defaults to 5000) — Express listening port.
+  - For object storage routes: PUBLIC_OBJECT_SEARCH_PATHS and PRIVATE_OBJECT_DIR must be set if using object storage endpoints.
+- Dev: npm run dev (serves API and client with HMR). Prod: npm run build then npm start (serves from dist/public via server/vite.ts: serveStatic).
+- DB schema/migrations: Use drizzle-kit with shared\schema.ts; push changes with npm run db:push after updating the schema.
+- Seed: server\seed.ts creates demo users, consult, prescriptions, orders; run via tsx server/seed.ts (ensure DATABASE_URL set, DB reachable).
+
+Runtime Composition
+- server\index.ts bootstraps Express, attaches logging middleware, calls registerRoutes(app), then conditionally attaches Vite middleware in dev or serves static build in prod.
+- server\routes.ts exposes REST endpoints for auth, consults, prescriptions, pharmacy QR verification, diagnostics orders, object storage, referrals, and chat messages.
+- server\storage.ts implements IStorage using Drizzle (shared\schema.ts), providing CRUD for users, consults, messages, prescriptions, referrals, diagnostics orders.
+- server\adapters ties registry (shared\config.ts) to concrete implementations (stubs and QR code adapter); adapters are used by routes for auth/messaging/QR/storage/audit behaviors.
+- shared\ports.ts defines hexagonal “ports” for domain capabilities; current server uses concrete classes but typed against these interfaces.
+- client\src uses wouter for routing with distinct portals per role; TanStack Query wraps API requests via client\src\lib\api.ts.
+
+Key Endpoints (server\routes.ts)
+- Auth: POST /api/auth/request-otp, POST /api/auth/verify-otp, POST /api/auth/signup, POST /api/auth/mock-login
+- Consults: POST /api/consults/intake, POST /api/consults/:id/queue, GET /api/consults?role=…&userId=…, GET /api/consults/:id
+- Prescriptions: GET /api/prescriptions?patientId=…, GET /api/prescriptions/:id, GET /api/prescriptions/:id/qr-image?userId=…, POST /api/prescriptions/:id/download-pdf
+- Pharmacy: POST /api/pharmacy/verify
+- Diagnostics: GET /api/diagnostics/orders?userId=…&role=…, PUT /api/diagnostics/orders/:orderId/upload
+- Object Storage: GET /objects/:objectPath(*)?userId=…, POST /api/objects/upload
+- Referrals: GET /api/referrals?userId=…&role=…, POST /api/referrals
+- Messages: GET /api/consults/:consultId/messages, POST /api/consults/:consultId/messages
+
+Database Schema (shared\schema.ts)
+- users, consults, messages, prescriptions, referrals, diagnostics_orders with relations defined for Drizzle.
+- Zod-backed insert schemas and union types for enums (roles, statuses) ensure validation at edges.
+
+Client Routing (client\src\App.tsx)
+- Role-specific portals and common pages (legal, splash, terms/consent) are registered via wouter.
+- UI uses shadcn/ui (Radix-based) components under client\src\components\ui with TailwindCSS for theming.
+
+Object Storage (server\objectStorage.ts, server\objectAcl.ts)
+- Integrates with Replit sidecar to generate signed URLs and access objects in GCS-compatible buckets.
+- Implements ACL policy as custom metadata (custom:aclPolicy) with owner/visibility and rule hooks (types scaffolded; concrete rule types unimplemented).
+- Routes handle serving and upload URL provisioning; prescriptions PDF generation uploads via this service and sets ACL to private owned by the patient.
+
+Security Considerations
+- Authentication/session: Endpoints accept identifiers in body/query (e.g., userId on GET /api/prescriptions/:id/qr-image); there is no session middleware or token-based auth enforcing identity on requests. This is acceptable for a stub/demo but should be replaced with real auth (e.g., session + passport or JWT) before production.
+- Authorization checks: Prescription QR image endpoint validates ownership or role (pharmacy/gp). Pharmacy verify resolves tokens without PII exposure. Object storage GET enforces ACL policy via metadata and userId; again relies on caller-provided userId.
+- Secrets/env: DATABASE_URL must be set; object storage relies on environment provided by the platform; avoid logging secrets.
+- Rate limiting/audit: There is an AuditStub that logs events; replace with durable audit sink and add rate limiting for auth/OTP and sensitive endpoints.
+
+Adapter Registry (shared\config.ts, server\adapters)
+- Feature flags (FLAGS) and adapter REGISTRY allow swapping implementations:
+  - auth: auth.whatsappStub
+  - messaging: messaging.whatsappStub
+  - qr: qr.localStub vs vendor QR (not implemented yet)
+  - storage: storage.localStub vs S3 (not implemented yet)
+  - db: db.memoryRepo (declared but not used; actual DB is Postgres via drizzle)
+- To extend, add concrete adapter class and reference in server\adapters\index.ts + update REGISTRY.
+
+Potential Gaps / Next Steps
+- Authentication: Add real session handling (express-session + passport) or JWT; remove reliance on query/body userId for authorization checks.
+- CSRF/CORS: Configure CORS and, if using cookies/sessions, add CSRF protections.
+- Persistence for files: storage.localStub is in-memory; replace with persistent storage (S3/GCS) for production, wiring REGISTRY accordingly.
+- OTP delivery: Replace WhatsApp stubs with a real provider; ensure validation + throttling.
+- Tests: No tests present; add unit tests for routes/storage and integration tests for critical flows (prescriptions, QR, diagnostics uploads).
+- Migrations: Ensure drizzle migrations are generated/checked-in (migrations folder currently set but absent); manage schema changes via drizzle-kit generate/push.
+- Socket/RTC: socket.io and @daily-co/daily-js are in dependencies but not used in code paths; remove or implement real-time consult/queue features if desired.
+
+How To Work With This Repo
+1) Install dependencies: npm i
+2) Set env:
+   - DATABASE_URL=postgres://…
+   - Optional for object storage: PUBLIC_OBJECT_SEARCH_PATHS, PRIVATE_OBJECT_DIR
+3) (Optional) Seed: tsx server/seed.ts
+4) Dev: npm run dev (serves API + client with HMR)
+5) Prod: npm run build && npm start
+
+Quick File Index (non-exhaustive)
+- server: index.ts, routes.ts, db.ts, vite.ts, seed.ts, objectStorage.ts, objectAcl.ts
+- server/adapters: auth.whatsappStub.ts, messaging.whatsappStub.ts, qr.qrcodeAdapter.ts, qr.localStub.ts, storage.localStub.ts, audit.stub.ts
+- shared: schema.ts, ports.ts, config.ts
+- client/src: App.tsx, main.tsx, pages/* (patient, gp, specialist, pharmacy, diagnostics), components/*, lib/api.ts, lib/queryClient.ts, lib/storage.ts
+- build/config: vite.config.ts, tailwind.config.ts, tsconfig.json, drizzle.config.ts, postcss.config.js
+
+Notes
+- Vite config sets aliases: "@" → client/src, "@shared" → shared, "@assets" → attached_assets
+- server/vite.ts injects dev middleware and serves client/index.html; in prod, dist/public is served and a catch-all serves index.html.
+- server/routes.ts assembles the majority of API logic; keep changes surgical and validated against client expectations in client/src/lib/api.ts.
+
